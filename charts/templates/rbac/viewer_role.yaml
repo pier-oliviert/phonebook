@@ -4,8 +4,8 @@ kind: ClusterRole
 metadata:
   labels:
     app.kubernetes.io/name: phonebook
-    app.kubernetes.io/managed-by: kustomize
-  name: dnsrecord-viewer-role
+    {{- include "operator.labels" . | nindent 4 }}
+  name: phonebook:viewer-role
 rules:
 - apiGroups:
   - se.quencer.io
@@ -21,3 +21,4 @@ rules:
   - dnsrecords/status
   verbs:
   - get
+

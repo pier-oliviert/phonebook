@@ -8,7 +8,7 @@ metadata:
   name: dnsrecord-editor-role
 rules:
 - apiGroups:
-  - se.quencer.io.my.domain
+  - se.quencer.io
   resources:
   - dnsrecords
   verbs:
@@ -20,7 +20,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - se.quencer.io.my.domain
+  - se.quencer.io
   resources:
   - dnsrecords/status
   verbs:

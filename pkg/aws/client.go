@@ -34,17 +34,17 @@ func NewClient() (*r53, error) {
 	}
 	zoneID, err := utils.RetrieveValueFromEnvOrFile(kAWSZoneID)
 	if err != nil {
-		return nil, fmt.Errorf("E[PB#4102]: Zone ID not found -- %w", err)
+		return nil, fmt.Errorf("PB#0100: Zone ID not found -- %w", err)
 	}
 
 	hostedZoneID, err := utils.RetrieveValueFromEnvOrFile(kAWSHostedZoneID)
 	if err != nil {
-		return nil, fmt.Errorf("E[PB#4102]: Hosted Zone ID not found -- %w", err)
+		return nil, fmt.Errorf("PB#0100: Hosted Zone ID not found -- %w", err)
 	}
 
 	loadBalancerHost, err := utils.RetrieveValueFromEnvOrFile(kAWSLoadBalancerHost)
 	if err != nil {
-		return nil, fmt.Errorf("E[PB#4102]: Load balancer host not found -- %w", err)
+		return nil, fmt.Errorf("PB#0100: Load balancer host not found -- %w", err)
 	}
 
 	return &r53{

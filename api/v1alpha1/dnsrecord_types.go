@@ -68,7 +68,7 @@ type DNSRecordStatus struct {
 	RemoteID *string `json:"remoteID,omitempty"`
 }
 
-// +kubebuilder:object:root=truE
+// +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 
 // DNSRecord is the Schema for the dnsrecords API

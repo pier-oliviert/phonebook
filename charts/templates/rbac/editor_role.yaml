@@ -1,19 +1,23 @@
-# permissions for end users to view dnsrecords.
+# permissions for end users to edit dnsrecords.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   labels:
     app.kubernetes.io/name: phonebook
-    app.kubernetes.io/managed-by: kustomize
-  name: dnsrecord-viewer-role
+    {{- include "operator.labels" . | nindent 4 }}
+  name: phonebook:editor-role
 rules:
 - apiGroups:
   - se.quencer.io
   resources:
   - dnsrecords
   verbs:
+  - create
+  - delete
   - get
   - list
+  - patch
+  - update
   - watch
 - apiGroups:
   - se.quencer.io
@@ -21,3 +25,4 @@ rules:
   - dnsrecords/status
   verbs:
   - get
+

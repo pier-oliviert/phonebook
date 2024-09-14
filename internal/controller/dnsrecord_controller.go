@@ -65,7 +65,7 @@ func (r *DNSRecordReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		if k8sErrors.IsNotFound(err) {
 			return ctrl.Result{}, nil
 		}
-		return ctrl.Result{}, fmt.Errorf("E#5001: Couldn't retrieve the DNSRecord (%s) -- %w", req.NamespacedName, err)
+		return ctrl.Result{}, fmt.Errorf("PB#0002: Couldn't retrieve the DNSRecord (%s) -- %w", req.NamespacedName, err)
 	}
 
 	patch := client.MergeFrom(&record)
@@ -130,7 +130,7 @@ func (r *DNSRecordReconciler) deleteRecord(ctx context.Context, record *phoneboo
 		}
 
 		if err := r.Provider.Delete(ctx, record); err != nil {
-			logger.Error(err, "E[PB#1000]: Could not delete the record upstream")
+			logger.Error(err, "PB#0003: Could not delete the record upstream")
 
 			// The lock is in charge of updating the condition for an error
 			return err

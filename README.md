@@ -1,114 +1,44 @@
-# phonebook
-// TODO(user): Add simple overview of use/purpose
+# Phonebook: Manage DNS Record in Kubernetes
 
-## Description
-// TODO(user): An in-depth paragraph about your project and overview of use
+Phonebook is an [operator](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/) that helps you manage DNS Record for your cloud provider from within Kubernetes. Using custom resource definitions (CRDs), you can build DNS records in a same manner you would create other resources with Kubernetes.
 
-## Getting Started
-
-### Prerequisites
-- go version v1.22.0+
-- docker version 17.03+.
-- kubectl version v1.11.3+.
-- Access to a Kubernetes v1.11.3+ cluster.
-
-### To Deploy on the cluster
-**Build and push your image to the location specified by `IMG`:**
-
-```sh
-make docker-build docker-push IMG=<some-registry>/phonebook:tag
+```yaml
+# This will create a new `A` record `mysubdomain.mytestdomain.com` pointing
+# at `127.0.0.1``
+apiVersion: se.quencer.io/v1alpha1
+kind: DNSRecord
+metadata:
+  name: dnsrecord-sample
+  namespace: phonebook-system
+spec:
+  zone: mytestdomain.com
+  recordType: A
+  Name: mysubdomain
+  Targets:
+    - 127.0.0.1
 ```
 
-**NOTE:** This image ought to be published in the personal registry you specified.
-And it is required to have access to pull the image from the working environment.
-Make sure you have the proper permission to the registry if the above commands don’t work.
+### Features
 
-**Install the CRDs into the cluster:**
+- Each DNS Record owns a status that reflects the current state of the DNS Record as well errors, if any.
+- Support all DNS Record Types (A, AAAA, TXT, CNAME, etc.)
+- Support cloud provider specific properties 
+- Can be managed like any other Kubernetes resources, (k9s, Argo, Github Actions, etc.)
+- Great visibility for each DNS Record
 
-```sh
-make install
-```
+### Supported providers
 
-**Deploy the Manager to the cluster with the image specified by `IMG`:**
+Here's a list of all supported providers. If you need a provider that isn't yet supported, create a new [issue](https://github.com/pier-oliviert/phonebook/issues/new).
 
-```sh
-make deploy IMG=<some-registry>/phonebook:tag
-```
+|Provider|
+|--|
+|[AWS](./docs/providers/aws.md)|
+|[Cloudflare](./docs/providers/cloudflare.md)|
 
-> **NOTE**: If you encounter RBAC errors, you may need to grant yourself cluster-admin
-privileges or be logged in as admin.
+### Get Started
 
-**Create instances of your solution**
-You can apply the samples (examples) from the config/sample:
+Check the [Get Started](./GET_STARTED.md) page to learn how to install Phonebook in your Kubernetes cluster.
 
-```sh
-kubectl apply -k config/samples/
-```
+### Special thanks
 
->**NOTE**: Ensure that the samples has default values to test it out.
-
-### To Uninstall
-**Delete the instances (CRs) from the cluster:**
-
-```sh
-kubectl delete -k config/samples/
-```
-
-**Delete the APIs(CRDs) from the cluster:**
-
-```sh
-make uninstall
-```
-
-**UnDeploy the controller from the cluster:**
-
-```sh
-make undeploy
-```
-
-## Project Distribution
-
-Following are the steps to build the installer and distribute this project to users.
-
-1. Build the installer for the image built and published in the registry:
-
-```sh
-make build-installer IMG=<some-registry>/phonebook:tag
-```
-
-NOTE: The makefile target mentioned above generates an 'install.yaml'
-file in the dist directory. This file contains all the resources built
-with Kustomize, which are necessary to install this project without
-its dependencies.
-
-2. Using the installer
-
-Users can just run kubectl apply -f <URL for YAML BUNDLE> to install the project, i.e.:
-
-```sh
-kubectl apply -f https://raw.githubusercontent.com/<org>/phonebook/<tag or branch>/dist/install.yaml
-```
-
-## Contributing
-// TODO(user): Add detailed information on how you would like others to contribute to this project
-
-**NOTE:** Run `make help` for more information on all potential `make` targets
-
-More information can be found via the [Kubebuilder Documentation](https://book.kubebuilder.io/introduction.html)
-
-## License
-
-Copyright 2024.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
+This project was built out of need, but I also want to give a special thanks to [external-dns](https://github.com/kubernetes-sigs/external-dns) as that project was a huge inspiration for Phonebook. A lot of the ideas here stem from my usage of external-dns over the years. I have nothing but respect for that project.
