@@ -20,6 +20,7 @@ spec:
 
 ### Features
 
+- Full DNS Record lifecycle
 - Each DNS Record owns a status that reflects the current state of the DNS Record as well errors, if any.
 - Support all DNS Record Types (A, AAAA, TXT, CNAME, etc.)
 - Support cloud provider specific properties 
