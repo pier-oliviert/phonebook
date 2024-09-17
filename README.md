@@ -13,8 +13,8 @@ metadata:
 spec:
   zone: mytestdomain.com
   recordType: A
-  Name: mysubdomain
-  Targets:
+  name: mysubdomain
+  targets:
     - 127.0.0.1
 ```
 
