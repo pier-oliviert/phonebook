@@ -27,8 +27,18 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	sequenceriov1alpha1 "github.com/pier-oliviert/phonebook/api/v1alpha1"
+	phonebook "github.com/pier-oliviert/phonebook/api/v1alpha1"
 )
+
+type TestProvider struct{}
+
+func (tp TestProvider) Create(context.Context, *phonebook.DNSRecord) error {
+	return nil
+}
+
+func (tp TestProvider) Delete(context.Context, *phonebook.DNSRecord) error {
+	return nil
+}
 
 var _ = Describe("DNSRecord Controller", func() {
 	Context("When reconciling a resource", func() {
@@ -40,18 +50,18 @@ var _ = Describe("DNSRecord Controller", func() {
 			Name:      resourceName,
 			Namespace: "default",
 		}
-		dnsrecord := &sequenceriov1alpha1.DNSRecord{}
+		dnsrecord := &phonebook.DNSRecord{}
 
 		BeforeEach(func() {
 			By("creating the custom resource for the Kind DNSRecord")
 			err := k8sClient.Get(ctx, typeNamespacedName, dnsrecord)
 			if err != nil && errors.IsNotFound(err) {
-				resource := &sequenceriov1alpha1.DNSRecord{
+				resource := &phonebook.DNSRecord{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      resourceName,
 						Namespace: "default",
 					},
-					Spec: sequenceriov1alpha1.DNSRecordSpec{
+					Spec: phonebook.DNSRecordSpec{
 						Zone:       "example.com",
 						RecordType: "A",
 						Name:       "subdomain",
@@ -64,7 +74,7 @@ var _ = Describe("DNSRecord Controller", func() {
 
 		AfterEach(func() {
 			// TODO(user): Cleanup logic after each test, like removing the resource instance.
-			resource := &sequenceriov1alpha1.DNSRecord{}
+			resource := &phonebook.DNSRecord{}
 			err := k8sClient.Get(ctx, typeNamespacedName, resource)
 			Expect(err).NotTo(HaveOccurred())
 
@@ -74,8 +84,9 @@ var _ = Describe("DNSRecord Controller", func() {
 		It("should successfully reconcile the resource", func() {
 			By("Reconciling the created resource")
 			controllerReconciler := &DNSRecordReconciler{
-				Client: k8sClient,
-				Scheme: k8sClient.Scheme(),
+				Provider: TestProvider{},
+				Client:   k8sClient,
+				Scheme:   k8sClient.Scheme(),
 			}
 
 			_, err := controllerReconciler.Reconcile(ctx, reconcile.Request{

@@ -21,6 +21,7 @@ import (
 	"fmt"
 
 	core "k8s.io/api/core/v1"
+	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -31,7 +32,6 @@ import (
 	"github.com/pier-oliviert/konditionner/pkg/konditions"
 	phonebook "github.com/pier-oliviert/phonebook/api/v1alpha1"
 	"github.com/pier-oliviert/phonebook/pkg/provider"
-	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 const kDNSRecordFinalizer string = "phonebook.se.quencer.io/finalizer"
@@ -48,15 +48,6 @@ type DNSRecordReconciler struct {
 // +kubebuilder:rbac:groups=se.quencer.io,resources=dnsrecords,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=se.quencer.io,resources=dnsrecords/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=se.quencer.io,resources=dnsrecords/finalizers,verbs=update
-
-// Reconcile is part of the main kubernetes reconciliation loop which aims to
-// move the current state of the cluster closer to the desired state.
-// the DNSRecord object against the actual cluster state, and then
-// perform operations to make the cluster state reflect the state specified by
-// the user.
-//
-// For more details, check Reconcile and its Result here:
-// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.19.0/pkg/reconcile
 func (r *DNSRecordReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = log.FromContext(ctx)
 
@@ -68,30 +59,37 @@ func (r *DNSRecordReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, fmt.Errorf("PB#0002: Couldn't retrieve the DNSRecord (%s) -- %w", req.NamespacedName, err)
 	}
 
-	patch := client.MergeFrom(&record)
-
 	condition := record.Status.Conditions.FindOrInitializeFor(phonebook.ProviderCondition)
+	record.Status.Conditions.SetCondition(condition)
+
 	if condition.Status == konditions.ConditionInitialized {
 		err := r.createRecord(ctx, &record)
 		if err != nil {
 			r.Event(&record, core.EventTypeWarning, string(phonebook.ProviderCondition), err.Error())
 		}
 
-		return ctrl.Result{}, r.Status().Patch(ctx, &record, patch)
+		return ctrl.Result{}, err
 	}
 
-	return ctrl.Result{}, nil
+	if !record.DeletionTimestamp.IsZero() || condition.Status == konditions.ConditionTerminating {
+		err := r.deleteRecord(ctx, &record)
+		if err != nil {
+			r.Event(&record, core.EventTypeWarning, string(phonebook.ProviderCondition), err.Error())
+		}
+
+		return ctrl.Result{}, err
+	}
+
+	return ctrl.Result{}, r.Status().Update(ctx, &record)
 }
 
 func (r *DNSRecordReconciler) createRecord(ctx context.Context, record *phonebook.DNSRecord) error {
-	conditions := &record.Status.Conditions
-	patch := client.MergeFrom(record)
+	_ = log.FromContext(ctx)
 
 	lock := NewLock(record, phonebook.ProviderCondition)
 	return lock.Execute(ctx, r.Client, func(condition konditions.Condition) error {
-
 		if controllerutil.AddFinalizer(record, kDNSRecordFinalizer) {
-			if err := r.Patch(ctx, record, patch); err != nil {
+			if err := r.Update(ctx, record); err != nil {
 				return err
 			}
 		}
@@ -102,7 +100,7 @@ func (r *DNSRecordReconciler) createRecord(ctx context.Context, record *phoneboo
 
 		condition.Status = konditions.ConditionCreated
 		condition.Reason = "DNS Record created according to the spec"
-		conditions.SetCondition(condition)
+		record.Conditions().SetCondition(condition)
 
 		return nil
 	})
@@ -111,23 +109,16 @@ func (r *DNSRecordReconciler) createRecord(ctx context.Context, record *phoneboo
 func (r *DNSRecordReconciler) deleteRecord(ctx context.Context, record *phonebook.DNSRecord) error {
 	logger := log.FromContext(ctx)
 
-	if !record.Conditions().TypeHasStatus(phonebook.ProviderCondition, konditions.ConditionCreated) {
-		// Nothing to do if the condition doesn't exist.
-		return nil
+	lock := NewLock(record, phonebook.ProviderCondition)
+
+	if lock.Condition().Status == konditions.ConditionTerminated || lock.Condition().Status == konditions.ConditionError {
+		if controllerutil.ContainsFinalizer(record, kDNSRecordFinalizer) {
+			controllerutil.RemoveFinalizer(record, kDNSRecordFinalizer)
+			return r.Update(ctx, record)
+		}
 	}
 
-	lock := NewLock(record, phonebook.ProviderCondition)
 	return lock.Execute(ctx, r.Client, func(condition konditions.Condition) error {
-		patch := client.MergeFrom(record)
-
-		if condition.Status == konditions.ConditionTerminated || condition.Status == konditions.ConditionError {
-			if controllerutil.ContainsFinalizer(record, kDNSRecordFinalizer) {
-				controllerutil.RemoveFinalizer(record, kDNSRecordFinalizer)
-				return r.Patch(ctx, record, patch)
-			}
-
-			return nil
-		}
 
 		if err := r.Provider.Delete(ctx, record); err != nil {
 			logger.Error(err, "PB#0003: Could not delete the record upstream")
@@ -140,7 +131,7 @@ func (r *DNSRecordReconciler) deleteRecord(ctx context.Context, record *phoneboo
 		condition.Reason = "Record deleted"
 		record.Conditions().SetCondition(condition)
 
-		return r.Status().Patch(ctx, record, patch)
+		return r.Status().Update(ctx, record)
 	})
 }
 
@@ -153,20 +144,21 @@ type ConditionalObject interface {
 }
 
 type Lock struct {
-	patch     client.Patch
 	obj       ConditionalObject
 	condition konditions.Condition
 }
 
 func NewLock(obj ConditionalObject, ct konditions.ConditionType) *Lock {
-	patch := client.MergeFrom(obj)
 	condition := obj.Conditions().FindOrInitializeFor(ct)
 
 	return &Lock{
-		patch:     patch,
 		condition: condition,
 		obj:       obj,
 	}
+}
+
+func (l *Lock) Condition() konditions.Condition {
+	return l.condition
 }
 
 func (l *Lock) Execute(ctx context.Context, c client.Client, task Task) error {
@@ -176,7 +168,7 @@ func (l *Lock) Execute(ctx context.Context, c client.Client, task Task) error {
 		Reason: "Resource locked",
 	})
 
-	if err := c.Status().Patch(ctx, l.obj, l.patch); err != nil {
+	if err := c.Status().Update(ctx, l.obj); err != nil {
 		return err
 	}
 
@@ -185,9 +177,10 @@ func (l *Lock) Execute(ctx context.Context, c client.Client, task Task) error {
 	if err != nil {
 		l.condition.Status = konditions.ConditionError
 		l.condition.Reason = err.Error()
+		l.obj.Conditions().SetCondition(l.condition)
 	}
 
-	return c.Status().Patch(ctx, l.obj, l.patch)
+	return c.Status().Update(ctx, l.obj)
 }
 
 // SetupWithManager sets up the controller with the Manager.
