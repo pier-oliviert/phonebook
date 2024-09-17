@@ -11,6 +11,8 @@ import (
 const kPhonebookProvider = "PHONEBOOK_PROVIDER"
 
 func NewProvider(name string) (Provider, error) {
+	log.Default().Print("Initializing provider: ", name)
+
 	switch name {
 	case "aws":
 		return aws.NewClient()
