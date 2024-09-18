@@ -5,6 +5,7 @@ import (
 	"log"
 
 	aws "github.com/pier-oliviert/phonebook/pkg/aws"
+	"github.com/pier-oliviert/phonebook/pkg/cloudflare"
 	utils "github.com/pier-oliviert/phonebook/pkg/utils"
 )
 
@@ -16,6 +17,8 @@ func NewProvider(name string) (Provider, error) {
 	switch name {
 	case "aws":
 		return aws.NewClient()
+	case "cloudflare":
+		return cloudflare.NewClient()
 	case "":
 		return nil, fmt.Errorf("PB#0001: The environment variable %s need to be set with a valid provider name", kPhonebookProvider)
 	}

@@ -27,22 +27,22 @@ type cf struct {
 // The CF_API_TOKEN value can either be sourced from an environment variable, or from a file.
 // The file needs to be located at `${kProviderConfigPath}/CF_API_TOKEN`
 // The file path is preferred as that's easier to work with different providers and Kubernetes secret system.
-func NewCloudflareProvider() (*cf, error) {
+func NewClient() (*cf, error) {
 	token, err := utils.RetrieveValueFromEnvOrFile(kCloudflareAPIKeyName)
 	if err != nil {
-		return nil, fmt.Errorf("E[PB#4002]: API Key not found -- %w", err)
+		return nil, fmt.Errorf("PB#0100: API Key not found -- %w", err)
 	}
 
 	zoneID, err := utils.RetrieveValueFromEnvOrFile(kCloudflareZoneID)
 	if err != nil {
-		return nil, fmt.Errorf("E[PB#4002]: Zone ID not found -- %w", err)
+		return nil, fmt.Errorf("PB#0100: Zone ID not found -- %w", err)
 	}
 
 	// Trimming space in case the user included a space when copying the token over. This small
 	// quality of life fix might just make it easier to work with token (debugging white spaces when trying new tools can be frustrating)
 	api, err := client.NewWithAPIToken(strings.TrimSpace(token))
 	if err != nil {
-		return nil, fmt.Errorf("E[PB#4003]: Could not create new Cloudflare Client -- %w", err)
+		return nil, fmt.Errorf("PB#4003: Could not create new Cloudflare Client -- %w", err)
 	}
 
 	return &cf{
