@@ -135,8 +135,8 @@ github.com/onsi/ginkgo/v2 v2.19.0 h1:9Cnnf7UHo57Hy3k6/m5k3dRfGTMXGvxhHFvkDTCTpvA
 github.com/onsi/ginkgo/v2 v2.19.0/go.mod h1:rlwLi9PilAFJ8jCg9UE1QP6VBpd6/xj3SRC0d6TU0To=
 github.com/onsi/gomega v1.33.1 h1:dsYjIxxSR755MDmKVsaFQTE22ChNBcuuTWgkUDSubOk=
 github.com/onsi/gomega v1.33.1/go.mod h1:U4R44UsT+9eLIaYRB2a5qajjtQYn0hauxvRm16AVYg0=
-github.com/pier-oliviert/konditionner v0.0.0-20240917125807-f0422719ce12 h1:dHCu1DFBRjB22FAI3KE7adC1nzbaS+BncNEGiXtgOJg=
-github.com/pier-oliviert/konditionner v0.0.0-20240917125807-f0422719ce12/go.mod h1:LX278aWLlmBdBfZODn6nbD5IL/EOkkQOo++G8RxvtSc=
+github.com/pier-oliviert/konditionner v0.0.0-20240917225256-10e96ab77c68 h1:QHP74OOVhtgf5sIm2lpaTc5u8sRxqr5Yds7pCbuAu9M=
+github.com/pier-oliviert/konditionner v0.0.0-20240917225256-10e96ab77c68/go.mod h1:vrOQY+J8hM1xHK11WkONBNZnLV6wcicnSFFTmTNn5SM=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=

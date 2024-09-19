@@ -10,7 +10,7 @@ require (
 	github.com/cloudflare/cloudflare-go v0.104.0
 	github.com/onsi/ginkgo/v2 v2.19.0
 	github.com/onsi/gomega v1.33.1
-	github.com/pier-oliviert/konditionner v0.0.0-20240917125807-f0422719ce12
+	github.com/pier-oliviert/konditionner v0.0.0-20240917225256-10e96ab77c68
 	k8s.io/api v0.31.0
 	k8s.io/apimachinery v0.31.0
 	k8s.io/client-go v0.31.0

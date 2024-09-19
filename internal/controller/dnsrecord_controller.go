@@ -86,8 +86,8 @@ func (r *DNSRecordReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 func (r *DNSRecordReconciler) createRecord(ctx context.Context, record *phonebook.DNSRecord) error {
 	_ = log.FromContext(ctx)
 
-	lock := NewLock(record, phonebook.ProviderCondition)
-	return lock.Execute(ctx, r.Client, func(condition konditions.Condition) error {
+	lock := konditions.NewLock(record, r.Client, phonebook.ProviderCondition)
+	return lock.Execute(ctx, func(condition konditions.Condition) error {
 		if controllerutil.AddFinalizer(record, kDNSRecordFinalizer) {
 			if err := r.Update(ctx, record); err != nil {
 				return err
@@ -109,7 +109,7 @@ func (r *DNSRecordReconciler) createRecord(ctx context.Context, record *phoneboo
 func (r *DNSRecordReconciler) deleteRecord(ctx context.Context, record *phonebook.DNSRecord) error {
 	logger := log.FromContext(ctx)
 
-	lock := NewLock(record, phonebook.ProviderCondition)
+	lock := konditions.NewLock(record, r.Client, phonebook.ProviderCondition)
 
 	if lock.Condition().Status == konditions.ConditionTerminated || lock.Condition().Status == konditions.ConditionError {
 		if controllerutil.ContainsFinalizer(record, kDNSRecordFinalizer) {
@@ -118,7 +118,7 @@ func (r *DNSRecordReconciler) deleteRecord(ctx context.Context, record *phoneboo
 		}
 	}
 
-	return lock.Execute(ctx, r.Client, func(condition konditions.Condition) error {
+	return lock.Execute(ctx, func(condition konditions.Condition) error {
 
 		if err := r.Provider.Delete(ctx, record); err != nil {
 			logger.Error(err, "PB#0003: Could not delete the record upstream")
@@ -133,54 +133,6 @@ func (r *DNSRecordReconciler) deleteRecord(ctx context.Context, record *phoneboo
 
 		return r.Status().Update(ctx, record)
 	})
-}
-
-type Task func(konditions.Condition) error
-
-type ConditionalObject interface {
-	Conditions() *konditions.Conditions
-
-	client.Object
-}
-
-type Lock struct {
-	obj       ConditionalObject
-	condition konditions.Condition
-}
-
-func NewLock(obj ConditionalObject, ct konditions.ConditionType) *Lock {
-	condition := obj.Conditions().FindOrInitializeFor(ct)
-
-	return &Lock{
-		condition: condition,
-		obj:       obj,
-	}
-}
-
-func (l *Lock) Condition() konditions.Condition {
-	return l.condition
-}
-
-func (l *Lock) Execute(ctx context.Context, c client.Client, task Task) error {
-	l.obj.Conditions().SetCondition(konditions.Condition{
-		Type:   l.condition.Type,
-		Status: konditions.ConditionLocked,
-		Reason: "Resource locked",
-	})
-
-	if err := c.Status().Update(ctx, l.obj); err != nil {
-		return err
-	}
-
-	err := task(l.condition)
-
-	if err != nil {
-		l.condition.Status = konditions.ConditionError
-		l.condition.Reason = err.Error()
-		l.obj.Conditions().SetCondition(l.condition)
-	}
-
-	return c.Status().Update(ctx, l.obj)
 }
 
 // SetupWithManager sets up the controller with the Manager.
