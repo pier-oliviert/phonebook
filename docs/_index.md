@@ -1,7 +1,6 @@
-+++
-title = 'Documentation'
-date = 2024-09-20T10:38:15-04:00
-draft = false
-+++
+---
+title: 'Documentation'
+date: 2024-09-20T10:38:15-04:00
+draft: false
+---
 
-Providers gives you a list of all the providers supported with their setup guide
