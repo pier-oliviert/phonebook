@@ -16,9 +16,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - uses: stefanzweifel/git-auto-commit-action@v5
+
+      - uses: peaceiris/actions-gh-pages@v4
         with:
-          commit_message: "Updating Documentation from `main`"
-          branch: gh-pages
-          file_pattern: "docs/*.md"
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          keep_files: true
+          source_dir: ./docs
+          publish_dir: ./
 
