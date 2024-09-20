@@ -19,7 +19,7 @@ jobs:
 
       - uses: peaceiris/actions-gh-pages@v4
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.GH_PAGES_AUTO_COMMIT }}
           publish_dir: ./docs
           destination_dir: ./docs
 
