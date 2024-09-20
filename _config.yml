@@ -18,19 +18,16 @@
 # You can create any custom variable you would like, and they will be accessible
 # in the templates via {{ site.myvariable }}.
 
-title: Your awesome title
-email: your-email@example.com
-description: >- # this means to ignore newlines until "baseurl:"
-  Write an awesome description for your new site here. You can edit this
-  line in _config.yml. It will appear in your document head meta (for
-  Google search results) and in your feed.xml site description.
+title: Phonebook
+email: phonebook@pier-olivier.dev
+description: >-
+  Phonebook is an operator that helps you manage DNS Record for your cloud provider from within Kubernetes.
+  Using custom resource definitions (CRDs), you can build DNS records in a same manner you would create other resources with Kubernetes.
 baseurl: "/phonebook" # the subpath of your site, e.g. /blog
 url: "https://pier-oliviert.github.io" # the base hostname & protocol for your site, e.g. http://example.com
-twitter_username: jekyllrb
-github_username:  jekyll
 
 # Build settings
-theme: minima
+theme: just-the-docs
 plugins:
   - jekyll-feed
 
