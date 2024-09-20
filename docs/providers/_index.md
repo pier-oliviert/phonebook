@@ -4,6 +4,7 @@ date: 2024-09-20T10:38:15-04:00
 draft: false
 cascade:
   type: docs
+weight: 3
 ---
 
 This is the complete list of all DNS providers supported by Phonebook. Each provider have different requirements, so please read the section below that is associated with the provider you want to use.

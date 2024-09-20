@@ -1,3 +1,10 @@
+---
+title: 'Errors'
+date: 2024-09-20T18:29:19-04:00
+draft: false
+weight: 5
+---
+
 # Errors in Phonebook
 
 This is a list of all errors that are coded (PB#_NUM_: ...) in Phonebook. The library encodes all of its errors in this format to give more context to the user when an error comes up.
