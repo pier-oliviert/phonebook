@@ -1,0 +1,20 @@
+baseURL: https://pier-oliviert.github.io/phonebook/
+languageCode: en-us
+title: "Phonebook"
+module:
+  imports:
+    - path: github.com/imfing/hextra
+menu:
+  main:
+    - name: Documentation
+      pageRef: /docs
+      weight: 1
+    - name: Search
+      weight: 2
+      params:
+        type: search
+    - name: GitHub
+      weight: 3
+      url: "https://github.com/pier-oliviert/phonebook"
+      params:
+        icon: github
