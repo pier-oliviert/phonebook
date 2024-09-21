@@ -1,5 +1,5 @@
 ---
-title: 'Provider: Cloudflare'
+title: 'Cloudflare'
 date: 2024-09-20T10:38:15-04:00
 draft: false
 ---
@@ -15,9 +15,7 @@ The API Token can be created by going to your [Cloudflare's profile page](https:
 1. `Zone.DNS` for `All Zones`
 2. `Account.Cloudflare Tunnel` for `All Account`
 
-{{- with .Resources.GetMatch "token-page.png" }}
-> ![Cloudflare's token page]({{.RelPermalink }})
-{{ end -}}
+> ![Cloudflare's token page](./token-page.png)
 
 It's possible to narrow down the zones and accounts to the specific one you want to use, but this is an exercise to the user. Once the API Token is created, you'll need to add it to the cluster, using the secret's name `cloudflare-api-token` as defined in the example above.
 
@@ -32,7 +30,6 @@ kubectl create secret generic cloudflare-api-token \
 
 ### Account IDs
 
-{{- with .Resources.GetMatch "profile-page.png" }}
-![Domain's page with Zone and Account IDs]({{.RelPermalink}})
-{{ end -}}
+![Domain's page with Zone and Account IDs](profile-page.png)
+
 
