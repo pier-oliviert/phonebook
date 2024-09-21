@@ -4,7 +4,7 @@ title: "Phonebook"
 module:
   mounts:
     - source: docs
-      target: content/docs
+      target: content
   imports:
     - path: github.com/imfing/hextra
 menu:
