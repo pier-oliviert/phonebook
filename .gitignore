@@ -25,3 +25,6 @@ go.work
 *.swp
 *.swo
 *~
+
+# OS X
+.DS_Store
