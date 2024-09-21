@@ -3,7 +3,7 @@ title: 'Phonebook'
 date: 2024-09-20T10:38:15-04:00
 draft: false
 cascade:
-  type: doc
+  type: docs
 ---
 
 Manage your DNS Record in Kubernetes like you manage everything else.
