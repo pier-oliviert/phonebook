@@ -31,14 +31,13 @@ spec:
 
 Here's a list of all supported providers. If you need a provider that isn't yet supported, create a new [issue](https://github.com/pier-oliviert/phonebook/issues/new).
 
-|Provider|
-|--|
-|[AWS](./docs/providers/aws.md)|
-|[Cloudflare](./docs/providers/cloudflare.md)|
+|||
+|--|--|
+|[AWS](https://pier-oliviert.github.io/phonebook/docs/providers/aws.md)|[Cloudflare](https://pier-oliviert.github.io/phonebook/docs/providers/cloudflare.md)|
 
 ### Get Started
 
-Check the [Get Started](./GET_STARTED.md) page to learn how to install Phonebook in your Kubernetes cluster.
+The [documentation](https://pier-oliviert.github.io/phonebook/) has all the information for you to get started with Phonebook.
 
 ### Special thanks
 
