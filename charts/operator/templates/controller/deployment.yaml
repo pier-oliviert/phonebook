@@ -43,7 +43,7 @@ spec:
         args:
           - --leader-elect
           - --health-probe-bind-address=:8081
-        image: {{ default "github.com/pier-oliviert/phonebook:0.1" .Values.manager.image }} 
+        image: {{ .Values.manager.image }} 
         name: manager
         env:
         {{- range .Values.manager.env }}

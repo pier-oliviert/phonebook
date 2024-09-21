@@ -1,0 +1,2 @@
+manager:
+  image: "github.com/pier-oliviert/phonebook:0.1"
