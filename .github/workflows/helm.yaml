@@ -2,7 +2,8 @@ name: Charts
 
 on:
   push:
-    tags: ["*"]
+    release: 
+      types: [published]
 
 jobs:
   release:
