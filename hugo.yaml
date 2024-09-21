@@ -9,9 +9,6 @@ module:
     - path: github.com/imfing/hextra
 menu:
   main:
-    - name: Documentation
-      pageRef: /docs
-      weight: 1
     - name: Search
       weight: 2
       params:
