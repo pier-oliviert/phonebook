@@ -1,4 +1,5 @@
 # Phonebook: Manage DNS Record in Kubernetes
+[![Tests](https://github.com/pier-oliviert/phonebook/actions/workflows/test.yaml/badge.svg)](https://github.com/pier-oliviert/phonebook/actions/workflows/test.yaml)
 
 Phonebook is an [operator](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/) that helps you manage DNS Record for your cloud provider from within Kubernetes. Using custom resource definitions (CRDs), you can build DNS records in a same manner you would create other resources with Kubernetes.
 
