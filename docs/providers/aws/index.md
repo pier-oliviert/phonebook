@@ -8,11 +8,11 @@ This guide assumes you have an EKS cluster already running in your account. That
 
 ## Permissions
 
-Sequencer needs to have a few, but specific permission settings in order to be installed, and to run. The following steps are mutually exclusive, which means that after you've installed the operator, you can revert the changes you made in the installation section if you feel like it.
+Phonebook needs to have a few, but specific permission settings in order to be installed, and to run. The following steps are mutually exclusive, which means that after you've installed the operator, you can revert the changes you made in the installation section if you feel like it.
 
 ### For the installation
 
-To install Sequencer, you'll need to apply the Helm chart and it will require you to use a user/role that has a few unique permissions. Below you'll see a list of screenshot that might give you a better idea of what you have to do to have the right credentials.
+To install Phonebook, you'll need to apply the Helm chart and it will require you to use a user/role that has a few unique permissions. Below you'll see a list of screenshot that might give you a better idea of what you have to do to have the right credentials.
 
 *This guide here will focus on a user, it will not create a role, and will not abstract some of the concept on AWS. The goal here is to get you up and running, while the explanation below are user-centric, you can absolutely use some of the concept here and abstract them as roles/user groups.*
 
@@ -64,10 +64,10 @@ After creating the access policy, you'll be redirected to the access policy tab 
 You should now be able to install the operator using the kubeconfig you created earlier
 
 ```sh
-helm install sequencer https://github.com/pier-oliviert/sequencer/releases/download/v0.1/sequencer-0.1.0.tgz \
-  --namespace sequencer-system \
+helm upgrade --install phonebook phonebook/phonebook \
+  --namespace phonebook-system \
   --create-namespace \
-  --kubeconfig ~/.kube/aws.config
+  --values values.yaml
 ```
 
 ## DNS Service Account Permissions

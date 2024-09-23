@@ -7,11 +7,20 @@ weight: 1
 
 The helm chart is the official way to install Phonebook in your cluster.
 
+1. **Add helm repo**
+
 ```sh
-helm upgrade --install phonebook $TODO_URL \
+helm repo add phonebook https://pier-oliviert.github.io/phonebook/ --force-update
+```
+
+2. **Configure `values.yaml` to your provider**
+
+Phonebook requires some user values about the DNS provider you want to use to successfully run. Refer to the [providers](./providers) page to learn how to configure your `values.yaml` file.
+
+3. **Install Phonebook**
+```sh
+helm upgrade --install phonebook phonebook/phonebook \
   --namespace phonebook-system \
   --create-namespace \
   --values values.yaml
 ```
-
-The `values.yaml` is your own file that you need to configure to use the provider you want to use.
