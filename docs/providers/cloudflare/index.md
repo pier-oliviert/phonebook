@@ -4,7 +4,22 @@ date: 2024-09-20T10:38:15-04:00
 draft: false
 ---
 
-To use Cloudflare as a networking integration, you'll need to create an API token on their site and create a secret in your Kubernetes cluster. Unless the namespace is specified like the example above, the operator will expect the secret to live in the **same namespace as the one you used to deploy the Workspace**.
+```yaml
+# values.yaml
+controller:
+  env:
+    PHONEBOOK_PROVIDER: cloudflare
+  providerSecrets: cloudflare-secrets
+```
+
+```sh
+kubectl create secrets generic cloudflare-secrets \
+  --namespace phonebook-system \
+  --from-literal=CF_API_TOKEN=${API_TOKEN} \
+  --from-literal=CF_ZONE_ID=${ZONE_ID} \
+```
+
+To use Cloudflare as a provider, you'll need to create an API token on their site and create a secret in your Kubernetes cluster. Phonebook expects the secret to live in the **same namespace as the one running Phonebook's controller**.
 
 &nbsp;
 

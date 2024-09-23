@@ -1,2 +1,2 @@
-manager:
+controller:
   image: "github.com/pier-oliviert/phonebook:v0.2"
