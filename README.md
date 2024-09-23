@@ -34,7 +34,7 @@ Here's a list of all supported providers. If you need a provider that isn't yet 
 
 |||
 |--|--|
-|[AWS](https://pier-oliviert.github.io/phonebook/docs/providers/aws.md)|[Cloudflare](https://pier-oliviert.github.io/phonebook/docs/providers/cloudflare.md)|
+|[AWS](https://pier-oliviert.github.io/phonebook/providers/aws/)|[Cloudflare](https://pier-oliviert.github.io/phonebook/providers/cloudflare/)|
 
 ### Get Started
 
