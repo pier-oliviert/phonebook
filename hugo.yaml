@@ -5,6 +5,8 @@ module:
   mounts:
     - source: docs
       target: content
+    - source: index.yaml
+      target: static/index.yaml
   imports:
     - path: github.com/imfing/hextra
 menu:
