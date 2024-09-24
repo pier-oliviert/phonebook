@@ -18,6 +18,26 @@ func TestNewClient(t *testing.T) {
 	os.Setenv("AWS_ZONE_ID", "Some Value")
 }
 
+func TestDNSNameConcatenation(t *testing.T) {
+	record := phonebook.DNSRecord{
+		Spec: phonebook.DNSRecordSpec{
+			Zone:    "mydomain.com",
+			Name:    "subdomain",
+			Targets: []string{"127.0.0.1"},
+		},
+	}
+
+	c := &r53{
+		zoneID: "MyZone123",
+	}
+
+	set := c.resourceRecordSet(&record)
+
+	if *set.Name != "subdomain.mydomain.com" {
+		t.Error("Expected name to include both zone and name", "Name", set.Name)
+	}
+}
+
 func TestAliastTargetProperty(t *testing.T) {
 	record := phonebook.DNSRecord{
 		Spec: phonebook.DNSRecordSpec{

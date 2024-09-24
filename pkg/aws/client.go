@@ -78,8 +78,10 @@ func (c *r53) Delete(ctx context.Context, record *phonebook.DNSRecord) error {
 
 // Convert a DNSRecord to a resourceRecordSet
 func (c *r53) resourceRecordSet(record *phonebook.DNSRecord) *types.ResourceRecordSet {
+	fullName := fmt.Sprintf("%s.%s", record.Spec.Name, record.Spec.Zone)
+
 	set := types.ResourceRecordSet{
-		Name: &record.Spec.Name,
+		Name: &fullName,
 		Type: types.RRType(record.Spec.RecordType),
 	}
 
