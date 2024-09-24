@@ -12,13 +12,10 @@ import (
 )
 
 const kAWSZoneID = "AWS_ZONE_ID"
-const kAWSHostedZoneID = "AWS_HOSTED_ZONE_ID"
-const kAWSLoadBalancerHost = "AWS_LOAD_BALANCER_HOST"
 
 type r53 struct {
-	hostedZoneID     string
-	zoneID           string
-	loadBalancerHost string
+	hostedZoneID string
+	zoneID       string
 	*route53.Client
 }
 
@@ -37,21 +34,9 @@ func NewClient() (*r53, error) {
 		return nil, fmt.Errorf("PB#0100: Zone ID not found -- %w", err)
 	}
 
-	hostedZoneID, err := utils.RetrieveValueFromEnvOrFile(kAWSHostedZoneID)
-	if err != nil {
-		return nil, fmt.Errorf("PB#0100: Hosted Zone ID not found -- %w", err)
-	}
-
-	loadBalancerHost, err := utils.RetrieveValueFromEnvOrFile(kAWSLoadBalancerHost)
-	if err != nil {
-		return nil, fmt.Errorf("PB#0100: Load balancer host not found -- %w", err)
-	}
-
 	return &r53{
-		zoneID:           zoneID,
-		hostedZoneID:     hostedZoneID,
-		loadBalancerHost: loadBalancerHost,
-		Client:           route53.NewFromConfig(cfg),
+		zoneID: zoneID,
+		Client: route53.NewFromConfig(cfg),
 	}, nil
 }
 
