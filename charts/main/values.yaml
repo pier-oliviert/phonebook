@@ -1,2 +1,2 @@
 controller:
-  image: "github.com/pier-oliviert/phonebook:v0.2"
+  image: "ghcr.io/pier-oliviert/phonebook:v0.2"
