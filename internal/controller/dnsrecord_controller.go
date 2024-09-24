@@ -49,8 +49,6 @@ type DNSRecordReconciler struct {
 // +kubebuilder:rbac:groups=se.quencer.io,resources=dnsrecords/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=se.quencer.io,resources=dnsrecords/finalizers,verbs=update
 func (r *DNSRecordReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	logger := log.FromContext(ctx)
-
 	var record phonebook.DNSRecord
 	if err := r.Get(ctx, req.NamespacedName, &record); err != nil {
 		if k8sErrors.IsNotFound(err) {
