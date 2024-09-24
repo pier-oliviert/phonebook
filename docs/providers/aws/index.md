@@ -5,7 +5,7 @@ draft: false
 ---
 
 {{< callout type="warning" >}}
-    You should already have an EKS cluster running in your account, with a running node group. The EKS Cluster should also be configured to use **EKS API** as an authentication mode.
+You should already have an EKS cluster running in your account, with a running node group. The EKS Cluster should also be configured to use **EKS API** as an authentication mode.
 {{< /callout >}}
 
 ```yaml values.yaml
@@ -43,12 +43,12 @@ Once your Identity Provider is configured, you'll be ready to create a role to u
 OIDC is the bridge that can connect IAM to your EKS cluster. To make it possible for Phonebook to make changes to Route53, you'll need to create a role that you'll use as annotations with your Service Account. 
 
 {{< callout type="info" >}}
-    This section will use a fake OIDC Provider URL based on the screenshot above:
+This section will use a fake OIDC Provider URL based on the screenshot above:
 
-    - OIDC Provider URL: `https://oidc.eks.us-east-2.amazonaws.com/id/F1A5247B9AAAAAAAAAAAAA06364EC072201D`
-    - OIDC ID: `F1A5247B9AAAAAAAAAAAAA06364EC072201D`
+- OIDC Provider URL: `https://oidc.eks.us-east-2.amazonaws.com/id/F1A5247B9AAAAAAAAAAAAA06364EC072201D`
+- OIDC ID: `F1A5247B9AAAAAAAAAAAAA06364EC072201D`
 
-    You'll need to replace those values with the ones you have.
+You'll need to replace those values with the ones you have.
 {{< /callout >}}
 
 First, create a new Role. For Trusted Entity, select **Custom trust policy**. In the textbox that should have appeared, replace the content with this template:
