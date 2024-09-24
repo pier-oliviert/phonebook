@@ -21,12 +21,11 @@ spec:
 
 ### Features
 
-- Full DNS Record lifecycle
-- Each DNS Record owns a status that reflects the current state of the DNS Record as well errors, if any.
+- Only manage DNS Record that are presents as DNSRecord in the cluster
+- Manage DNS Record like any other resources (Create/Delete)
 - Support all DNS Record Types (A, AAAA, TXT, CNAME, etc.)
 - Support cloud provider specific properties 
-- Can be managed like any other Kubernetes resources, (k9s, Argo, Github Actions, etc.)
-- Great visibility for each DNS Record
+- Proper error handling per DNS Record
 
 ### Supported providers
 
