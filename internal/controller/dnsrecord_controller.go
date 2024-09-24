@@ -49,7 +49,7 @@ type DNSRecordReconciler struct {
 // +kubebuilder:rbac:groups=se.quencer.io,resources=dnsrecords/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=se.quencer.io,resources=dnsrecords/finalizers,verbs=update
 func (r *DNSRecordReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
+	logger := log.FromContext(ctx)
 
 	var record phonebook.DNSRecord
 	if err := r.Get(ctx, req.NamespacedName, &record); err != nil {
@@ -65,6 +65,7 @@ func (r *DNSRecordReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	if condition.Status == konditions.ConditionInitialized {
 		err := r.createRecord(ctx, &record)
 		if err != nil {
+			logger.Error(err, "DNS Record could not be created", "Zone", record.Spec.Zone, "Subdomain", record.Spec.Name)
 			r.Event(&record, core.EventTypeWarning, string(phonebook.ProviderCondition), err.Error())
 		}
 
