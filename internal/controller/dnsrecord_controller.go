@@ -65,8 +65,6 @@ func (r *DNSRecordReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	if condition.Status == konditions.ConditionInitialized {
 		err := r.createRecord(ctx, &record)
 		if err != nil {
-			logger.Error(err, "DNS Record could not be created", "Zone", record.Spec.Zone, "Subdomain", record.Spec.Name)
-			r.Event(&record, core.EventTypeWarning, string(phonebook.ProviderCondition), err.Error())
 		}
 
 		return ctrl.Result{}, err
@@ -85,7 +83,7 @@ func (r *DNSRecordReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 }
 
 func (r *DNSRecordReconciler) createRecord(ctx context.Context, record *phonebook.DNSRecord) error {
-	_ = log.FromContext(ctx)
+	logger := log.FromContext(ctx)
 
 	lock := konditions.NewLock(record, r.Client, phonebook.ProviderCondition)
 	return lock.Execute(ctx, func(condition konditions.Condition) error {
@@ -96,6 +94,11 @@ func (r *DNSRecordReconciler) createRecord(ctx context.Context, record *phoneboo
 		}
 
 		if err := r.Provider.Create(ctx, record); err != nil {
+			// TODO:Eventually, this should move up the stack to the  main Reconciler method for this struct
+			// as Konditionner should return errors from the Task as expected.
+			logger.Error(err, "DNS Record could not be created", "Zone", record.Spec.Zone, "Subdomain", record.Spec.Name)
+			r.Event(record, core.EventTypeWarning, string(phonebook.ProviderCondition), err.Error())
+
 			return err
 		}
 
