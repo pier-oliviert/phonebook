@@ -5,6 +5,8 @@ import (
 	"os"
 	"strings"
 	"testing"
+
+	phonebook "github.com/pier-oliviert/phonebook/api/v1alpha1"
 )
 
 func TestNewClient(t *testing.T) {
@@ -14,4 +16,39 @@ func TestNewClient(t *testing.T) {
 	}
 
 	os.Setenv("AWS_ZONE_ID", "Some Value")
+}
+
+func TestAliastTargetProperty(t *testing.T) {
+	record := phonebook.DNSRecord{
+		Spec: phonebook.DNSRecordSpec{
+			Zone:    "mydomain.com",
+			Name:    "subdomain",
+			Targets: []string{"127.0.0.1"},
+			Properties: map[string]string{
+				AliasTarget: "myTargetZoneID",
+			},
+		},
+	}
+
+	c := &r53{
+		zoneID: "MyZone123",
+	}
+
+	set := c.resourceRecordSet(&record)
+
+	if len(set.ResourceRecords) > 0 {
+		t.Error("Expected record set to not have any resource records when using AliasTarget", "ResourceRecords", set.ResourceRecords)
+	}
+
+	if set.AliasTarget == nil {
+		t.Error("Expected alias target to be set when using AliasTarget")
+	}
+
+	if *set.AliasTarget.DNSName != record.Spec.Targets[0] {
+		t.Error("Expected alias target DNSNAme to be set to the target", "Targets", record.Spec.Targets)
+	}
+
+	if *set.AliasTarget.HostedZoneId != record.Spec.Properties[AliasTarget] {
+		t.Error("Expected alias hosted zone id to be set to the alias target property", "Properties", record.Spec.Properties)
+	}
 }

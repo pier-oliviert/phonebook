@@ -3,17 +3,18 @@ package provider
 import (
 	"context"
 	"fmt"
-	"log"
 
 	aws "github.com/pier-oliviert/phonebook/pkg/aws"
 	"github.com/pier-oliviert/phonebook/pkg/cloudflare"
 	utils "github.com/pier-oliviert/phonebook/pkg/utils"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 const kPhonebookProvider = "PHONEBOOK_PROVIDER"
 
 func NewProvider(ctx context.Context, name string) (Provider, error) {
-	log.Default().Print("Initializing provider: ", name)
+	logger := log.FromContext(ctx)
+	logger.Info("Initializing provider", "Name", name)
 
 	switch name {
 	case "aws":
@@ -32,12 +33,12 @@ func NewProvider(ctx context.Context, name string) (Provider, error) {
 func DefaultProvider() Provider {
 	value, err := utils.RetrieveValueFromEnvOrFile(kPhonebookProvider)
 	if err != nil {
-		log.Fatal(err)
+		panic(err.Error())
 	}
 
 	p, err := NewProvider(context.Background(), value)
 	if err != nil {
-		log.Fatal(err)
+		panic(err.Error())
 	}
 	return p
 }

@@ -12,11 +12,14 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-const kAWSZoneID = "AWS_ZONE_ID"
+const (
+	kAWSZoneID = "AWS_ZONE_ID"
+
+	AliasTarget = "AliasHostedZoneID"
+)
 
 type r53 struct {
-	hostedZoneID string
-	zoneID       string
+	zoneID string
 	*route53.Client
 }
 
@@ -80,19 +83,30 @@ func (c *r53) resourceRecordSet(record *phonebook.DNSRecord) *types.ResourceReco
 		Type: types.RRType(record.Spec.RecordType),
 	}
 
-	if set.Type == types.RRTypeA || set.Type == types.RRTypeCname {
+	set.TTL = new(int64)
+	*set.TTL = 60
+
+	if hostedZoneID, ok := record.Spec.Properties[AliasTarget]; ok {
+		// User specified Alias Hosted Zone ID. As such, Phonebook will
+		// create a DNS record using AWS' Alias Target function(1).
+		//
+		// Alias Target is useful when you want to create a DNS record that points to
+		// an AWS service. Since AWS can validate that the route doesn't leave their infra, you
+		// get some benefits like cost reduction, etc. The official documentation will have more
+		// information about this.
+		//
+		// 1. https://docs.aws.amazon.com/Route53/latest/APIReference/API_AliasTarget.html
 		set.AliasTarget = &types.AliasTarget{
 			DNSName:      &record.Spec.Targets[0],
-			HostedZoneId: &c.hostedZoneID,
+			HostedZoneId: &hostedZoneID,
 		}
-	} else {
-		set.ResourceRecords = append(set.ResourceRecords, types.ResourceRecord{
-			Value: &record.Spec.Targets[0],
-		})
-		set.TTL = new(int64)
-		*set.TTL = 60
 
+		return &set
 	}
+
+	set.ResourceRecords = append(set.ResourceRecords, types.ResourceRecord{
+		Value: &record.Spec.Targets[0],
+	})
 
 	return &set
 }
