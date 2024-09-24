@@ -6,6 +6,8 @@ cascade:
   type: docs
 ---
 
+Phonebook is a Kubernetes Operator that lets you manage DNS Record like any other resource in Kubernetes -- Deployments, Services, etc. You can safely create and delete DNS Record from `kubectl` and it will do the right thing.
+
 ```yaml
 # This will create a new `A` record `mysubdomain.mytestdomain.com` pointing
 # at `127.0.0.1``
@@ -21,8 +23,6 @@ spec:
   targets:
     - 127.0.0.1
 ```
-
-Phonebook is a Kubernetes Operator that lets you manage DNS Record like any other resource in Kubernetes -- Deployments, Services, etc. You can safely create and delete DNS Record from `kubectl` and it will do the right thing.
 
 ![A DNS Record](status.png)
 
