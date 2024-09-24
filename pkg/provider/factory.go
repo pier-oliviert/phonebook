@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"context"
 	"fmt"
 	"log"
 
@@ -11,14 +12,14 @@ import (
 
 const kPhonebookProvider = "PHONEBOOK_PROVIDER"
 
-func NewProvider(name string) (Provider, error) {
+func NewProvider(ctx context.Context, name string) (Provider, error) {
 	log.Default().Print("Initializing provider: ", name)
 
 	switch name {
 	case "aws":
-		return aws.NewClient()
+		return aws.NewClient(ctx)
 	case "cloudflare":
-		return cloudflare.NewClient()
+		return cloudflare.NewClient(ctx)
 	case "":
 		return nil, fmt.Errorf("PB#0001: The environment variable %s need to be set with a valid provider name", kPhonebookProvider)
 	}
@@ -34,7 +35,7 @@ func DefaultProvider() Provider {
 		log.Fatal(err)
 	}
 
-	p, err := NewProvider(value)
+	p, err := NewProvider(context.Background(), value)
 	if err != nil {
 		log.Fatal(err)
 	}

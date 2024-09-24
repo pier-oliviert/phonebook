@@ -27,7 +27,7 @@ type cf struct {
 // The CF_API_TOKEN value can either be sourced from an environment variable, or from a file.
 // The file needs to be located at `${kProviderConfigPath}/CF_API_TOKEN`
 // The file path is preferred as that's easier to work with different providers and Kubernetes secret system.
-func NewClient() (*cf, error) {
+func NewClient(ctx context.Context) (*cf, error) {
 	token, err := utils.RetrieveValueFromEnvOrFile(kCloudflareAPIKeyName)
 	if err != nil {
 		return nil, fmt.Errorf("PB#0100: API Key not found -- %w", err)
