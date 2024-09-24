@@ -4,73 +4,130 @@ date: 2024-09-20T10:38:15-04:00
 draft: false
 ---
 
-This guide assumes you have an EKS cluster already running in your account. That cluster should also have a node group (ec2 instances) running. The guide here is to help you get everything up and running within EKS.
+{{< callout type="warning" >}}
+    You should already have an EKS cluster running in your account, with a running node group. The EKS Cluster should also be configured to use **EKS API** as an authentication mode.
+{{< /callout >}}
 
-## Permissions
-
-Phonebook needs to have a few, but specific permission settings in order to be installed, and to run. The following steps are mutually exclusive, which means that after you've installed the operator, you can revert the changes you made in the installation section if you feel like it.
-
-### For the installation
-
-To install Phonebook, you'll need to apply the Helm chart and it will require you to use a user/role that has a few unique permissions. Below you'll see a list of screenshot that might give you a better idea of what you have to do to have the right credentials.
-
-*This guide here will focus on a user, it will not create a role, and will not abstract some of the concept on AWS. The goal here is to get you up and running, while the explanation below are user-centric, you can absolutely use some of the concept here and abstract them as roles/user groups.*
-
-The permissions required are split between AWS-level permissions and [Kubernetes' RBAC](https://kubernetes.io/docs/reference/access-authn-authz/rbac/). The AWS-level permissions are required to easily generate a `kubeconfig` for you to connect to your cluster to install the Helm chart. The RBAC permissions (through access policies), are needed so your user can deploy [Custom Resource Definitions](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/#customresourcedefinitions) to Kubernetes.
-
-Before you can proceed, this guide assumes you have the [CLI](https://aws.amazon.com/cli/) installed on your machine and it's logged in.. Throughout this guide, the user `pier-olivier` will be used, but you should see this as a placeholder to your own.
-
-First, you'll need to create a policy with the following actions which will allow you to create a valid `kubeconfig`. You'll need to do this because, as of this writing, AWS doesn't have a managed policy that includes these.
-
-&nbsp;
-
-|Name|Description|
-|-|-|
-|eks:ListClusters|List the clusters available on your account|
-|eks:DescribeCluster|Describe a cluster's configuration|
-
-The following screenshot shows you a step by step to get those permissions assigned to your user. Start by accessing the user's page:
-![Create an inline policy from the user's page](iam-user-dashboard.png)
-
-Then add the permissions described above to the inline policy
-![Add the permission to the inline policy](iam-policy-create.png)
-
-Name your policy, the name is only useful to have an overview of all the policies in the User's page. Also, confirm the policies you added and make sure there's no mistake
-![Name and confirm your new policy](iam-policy-create.png)
-
-Once those steps are done and succesful, you should be able to create a `kubeconfig` file at `~/.kube/aws-config`
-```sh
-aws eks update-kubeconfig --region ${YOUR_REGION} --name ${YOUR_CLUSTER_NAME} --kubeconfig ~/.kube/aws.config  
+```yaml values.yaml
+controller:
+  env:
+    - name: PHONEBOOK_PROVIDER
+      value: aws
+    - name: AWS_ZONE_ID
+      value: Z1111111111111
+serviceAccount:
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::1111111111:role/Phonebook-ServiceAccount
 ```
 
-You should know be able to query your cluster
-```sh
-kubectl get pods -A --kubeconfig ~/.kube/aws.config
+## Zone ID
+
+The AWS Zone ID needs to be specified in your `values.yaml`. The Zone ID needs to point to the domain you want to manage. Currently, only 1 domain can be managed by Phonebook.
+
+
+## Configure OIDC (OpenID Connect)
+
+This section will guide you through configuring your [EKS](https://aws.amazon.com/eks/) cluster to run with Phonebook. It will focus on configuring Phonebook's [`serviceAccount`](https://kubernetes.io/docs/concepts/security/service-accounts/) to allow its controller to make changes to [Route53](https://aws.amazon.com/route53/) on your behalf.
+
+Once the ServiceAccount is fully configure, Phonebook should be able to make changes to your DNS records by automatically authenticating to AWS using the right permissions as set here; No access token/secret token will be required to be set by you.
+
+
+EKS comes with a few defaults, but OIDC is not fully configured out of the box. Documentation is available on [AWS](https://docs.aws.amazon.com/eks/latest/userguide/enable-iam-roles-for-service-accounts.html) that shows how to connect your EKS cluster to an Identity Provider in your IAM console.
+
+Once your Identity Provider is configured, you'll be ready to create a role to use it. Keep your OIDC Provider URL close by, you'll need it in the following section
+
+> ![EKS cluster detail page](./cluster-page.png)
+
+## Create a role for your Service Account
+
+OIDC is the bridge that can connect IAM to your EKS cluster. To make it possible for Phonebook to make changes to Route53, you'll need to create a role that you'll use as annotations with your Service Account. 
+
+{{< callout type="info" >}}
+    This section will use a fake OIDC Provider URL based on the screenshot above:
+
+    - OIDC Provider URL: `https://oidc.eks.us-east-2.amazonaws.com/id/F1A5247B9AAAAAAAAAAAAA06364EC072201D`
+    - OIDC ID: `F1A5247B9AAAAAAAAAAAAA06364EC072201D`
+
+    You'll need to replace those values with the ones you have.
+{{< /callout >}}
+
+First, create a new Role. For Trusted Entity, select **Custom trust policy**. In the textbox that should have appeared, replace the content with this template:
+
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": {
+                "Federated": "arn:aws:iam::${YOUR_ACCOUNT_ID}:oidc-provider/oidc.eks.${YOUR_REGION}.amazonaws.com/id/${OIDC_ID}"
+            },
+            "Action": "sts:AssumeRoleWithWebIdentity",
+            "Condition": {
+                "StringEquals": {
+                    "oidc.eks.us-east-2.amazonaws.com/id/${OIDC_ID}:aud": "sts.amazonaws.com",
+                    "oidc.eks.us-east-2.amazonaws.com/id/${OIDC_ID}:sub": "system:serviceaccount:${PHONEBOOK_NAMESPACE}:phonebook-controller"
+                }
+            }
+        }
+    ]
+}
 ```
 
-We're half way done! Now, you'll need to add your user to EKS' access entries. Create a new access entry
-![Click on the Create Access Entry](eks-describe-access-entries.png)
+|${Variable}|Description|
+|--|--|
+|YOUR_ACCOUNT_ID|Your AWS Account ID. This is usually a number with 12 digits.|
+|YOUR_REGION|The AWS Region for your EKS Cluster. It is part of the OIDC Provider URL. In the example above, the URL is `https://oidc.eks.us-east-2.amazonaws.com/...` which means the region, in this example, is `us-east-2`|
+|OIDC_ID|In the example above, the OIDC_ID is `F1A5247B9AAAAAAAAAAAAA06364EC072201D`|
+|PHONEBOOK_NAMESPACE|The namespace, in Kubernetes, that phonebook runs in. By default, this value is `phonebook-system`. If you changed it, you'll need to use the same value here too.|
 
-The IAM Principal ARN needs to be your user. You should be able to see the ARN of your user by opening the dropdown
-![Dropdown should show you a list including your user's ARN](eks-access-policy-configure.png)
 
-Clicking on Next, you will be asked to choose a policy you want to attach to the user. Select `AmazonEKSClusterAdminPolicy`
-![Select `AmazonEKSClusterAdminPolicy` in the Policy list](eks-access-policy-add-policy.png)
+## Define a policy for the new role
 
-After creating the access policy, you'll be redirected to the access policy tab in the EKS dashboard. You should see your user with the right policies listed there as shown here
+A policy, in AWS, represents what service does the role has access to. Phonebook only needs access to a few of Route53's action. Most likely, you'll need to create a new custom policy for your Role as part of the Role wizard. You can name it whatever you want, it'll only be used by the Role here and won't need to be referenced anywhere.
 
-![User added with the `AmazonEKSClusterAdminPolicy` policy attached to the user](eks-access-policy-list-final.png)
-
-You should now be able to install the operator using the kubeconfig you created earlier
-
-```sh
-helm upgrade --install phonebook phonebook/phonebook \
-  --namespace phonebook-system \
-  --create-namespace \
-  --values values.yaml
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "route53:ChangeResourceRecordSets"
+            ],
+            "Resource": [
+                "arn:aws:route53:::hostedzone/*"
+            ]
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "route53:ListHostedZones",
+                "route53:ListResourceRecordSets",
+                "route53:ListTagsForResource"
+            ],
+            "Resource": [
+                "*"
+            ]
+        }
+    ]
+}
 ```
 
-## DNS Service Account Permissions
+## Add the Role as annotations to Phonebook's service account
 
-The cluster needs to be configured with the OIDC provider following the guide here: https://docs.aws.amazon.com/eks/latest/userguide/enable-iam-roles-for-service-accounts.html
+The last piece of the puzzle is to add an annotation to Phonebook's Service account so EKS can elevate this account. In the Role's detail page, you should have the **ARN** for that role. It should look something like this: `arn:aws:iam::1111111111:role/Phonebook-ServiceAccount`
 
+Modify your `values.yaml` to include the Role ARN as an annotations.
+
+```yaml values.yaml
+controller:
+  env:
+    - name: PHONEBOOK_PROVIDER
+      value: aws
+    - name: AWS_ZONE_ID
+      value: Z1111111111111
+serviceAccount:
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::1111111111:role/Phonebook-ServiceAccount
+```
