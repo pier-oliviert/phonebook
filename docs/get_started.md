@@ -15,7 +15,7 @@ helm repo add phonebook https://pier-oliviert.github.io/phonebook/ --force-updat
 
 2. **Configure `values.yaml` to your provider**
 
-Phonebook requires some user values about the DNS provider you want to use to successfully run. Refer to the [providers](/providers) page to learn how to configure your `values.yaml` file.
+Phonebook requires some user values about the DNS provider you want to use to successfully run. Refer to the [providers]({{< ref "/providers" >}}) page to learn how to configure your `values.yaml` file.
 
 3. **Install Phonebook**
 ```sh
