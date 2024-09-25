@@ -8,7 +8,8 @@ draft: false
 # values.yaml
 controller:
   env:
-    PHONEBOOK_PROVIDER: cloudflare
+    - name: PHONEBOOK_PROVIDER
+      value: cloudflare
   providerSecrets: cloudflare-secrets
 ```
 
