@@ -4,7 +4,6 @@ kind: Role
 metadata:
   labels:
     app.kubernetes.io/name: phonebook
-    app.kubernetes.io/managed-by: kustomize
   name: phonebook:leader-election
 rules:
 - apiGroups:
