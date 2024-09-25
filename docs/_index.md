@@ -41,4 +41,4 @@ spec:
 
 Phonebook is built to be cloud agnostic with the goal to support as many cloud providers as [external-dns](https://github.com/kubernetes-sigs/external-dns). Obviously, the list is long and each integration requires efforts to support. If you'd like to have support for your provider, please create an [issue](https://github.com/pier-oliviert/phonebook/issues/new)!
 
-The [provider](/providers) section offers documentation for each of the supported provider.
+The [provider]({{< ref "/providers" >}}) section offers documentation for each of the supported provider.
