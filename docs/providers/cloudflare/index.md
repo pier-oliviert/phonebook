@@ -6,11 +6,15 @@ draft: false
 
 ```yaml
 # values.yaml
+provider: cloudflare
 controller:
-  env:
-    - name: PHONEBOOK_PROVIDER
-      value: cloudflare
-  providerSecrets: cloudflare-secrets
+  secrets:
+    name: "cloudflare-secrets"
+    keys:
+      - name: "CF_API_TOKEN"
+        key: "apiToken"
+      - name: "CF_ZONE_ID"
+        key: "zoneId"
 ```
 
 To use Cloudflare as a provider, you'll need to create an API token on their site and create a secret in your Kubernetes cluster. Phonebook expects the secret to live in the **same namespace as the one running Phonebook's controller**.
@@ -18,8 +22,8 @@ To use Cloudflare as a provider, you'll need to create an API token on their sit
 ```sh
 kubectl create secrets generic cloudflare-secrets \
   --namespace phonebook-system \
-  --from-literal=CF_API_TOKEN=${API_TOKEN} \
-  --from-literal=CF_ZONE_ID=${ZONE_ID} \
+  --from-literal=apiToken=${API_TOKEN} \
+  --from-literal=zoneId=${ZONE_ID} \
 ```
 
 &nbsp;

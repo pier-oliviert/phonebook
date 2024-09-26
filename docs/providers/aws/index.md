@@ -4,15 +4,28 @@ date: 2024-09-20T10:38:15-04:00
 draft: false
 ---
 
+## Zone ID
+
+The AWS Zone ID needs to be specified in your `values.yaml`. The Zone ID needs to point to the domain you want to manage. Currently, only 1 domain can be managed by Phonebook.
+
+## Authentication
+You have two options when you configure your AWS provider. Depending on your setup, one might be more suited to your need than the other.
+
+- IAM Role bound to a service account
+- User supplied credentials
+
+### IAM Role bound to a service account
+
+This option is the recommended one if your Kubernetes cluster supports it. Most of the configuration happens on the AWS control panel and the changes to your helm chart is minimal. Moreover, you won't have to store any credentials at all on K8s as it will all be taken care of by EKS.
+
 {{< callout type="warning" >}}
 You should already have an EKS cluster running in your account, with a running node group. The EKS Cluster should also be configured to use **EKS API** as an authentication mode.
 {{< /callout >}}
 
-```yaml values.yaml
+```yaml
+provider: aws
 controller:
   env:
-    - name: PHONEBOOK_PROVIDER
-      value: aws
     - name: AWS_ZONE_ID
       value: Z1111111111111
 serviceAccount:
@@ -20,12 +33,7 @@ serviceAccount:
     eks.amazonaws.com/role-arn: arn:aws:iam::1111111111:role/Phonebook-ServiceAccount
 ```
 
-## Zone ID
-
-The AWS Zone ID needs to be specified in your `values.yaml`. The Zone ID needs to point to the domain you want to manage. Currently, only 1 domain can be managed by Phonebook.
-
-
-## Configure OIDC (OpenID Connect)
+#### Configure OIDC (OpenID Connect)
 
 This section will guide you through configuring your [EKS](https://aws.amazon.com/eks/) cluster to run with Phonebook. It will focus on configuring Phonebook's [`serviceAccount`](https://kubernetes.io/docs/concepts/security/service-accounts/) to allow its controller to make changes to [Route53](https://aws.amazon.com/route53/) on your behalf.
 
@@ -38,7 +46,7 @@ Once your Identity Provider is configured, you'll be ready to create a role to u
 
 > ![EKS cluster detail page](./cluster-page.png)
 
-## Create a role for your Service Account
+#### Create a role for your Service Account
 
 OIDC is the bridge that can connect IAM to your EKS cluster. To make it possible for Phonebook to make changes to Route53, you'll need to create a role that you'll use as annotations with your Service Account. 
 
@@ -82,7 +90,7 @@ First, create a new Role. For Trusted Entity, select **Custom trust policy**. In
 |PHONEBOOK_NAMESPACE|The namespace, in Kubernetes, that phonebook runs in. By default, this value is `phonebook-system`. If you changed it, you'll need to use the same value here too.|
 
 
-## Define a policy for the new role
+#### Define a policy for the new role
 
 A policy, in AWS, represents what service does the role has access to. Phonebook only needs access to a few of Route53's action. Most likely, you'll need to create a new custom policy for your Role as part of the Role wizard. You can name it whatever you want, it'll only be used by the Role here and won't need to be referenced anywhere.
 
@@ -114,20 +122,50 @@ A policy, in AWS, represents what service does the role has access to. Phonebook
 }
 ```
 
-## Add the Role as annotations to Phonebook's service account
+#### Add the Role as annotations to Phonebook's service account
 
 The last piece of the puzzle is to add an annotation to Phonebook's Service account so EKS can elevate this account. In the Role's detail page, you should have the **ARN** for that role. It should look something like this: `arn:aws:iam::1111111111:role/Phonebook-ServiceAccount`
 
 Modify your `values.yaml` to include the Role ARN as an annotations.
 
-```yaml values.yaml
+```yaml
+provider: aws
 controller:
   env:
-    - name: PHONEBOOK_PROVIDER
-      value: aws
     - name: AWS_ZONE_ID
       value: Z1111111111111
 serviceAccount:
   annotations:
     eks.amazonaws.com/role-arn: arn:aws:iam::1111111111:role/Phonebook-ServiceAccount
+```
+
+### User supplied credentials
+
+Although simpler at face value, supplied credentials requires you to manage rotation and make sure that secrets are present in the cluster before using them. Since Phonebook uses the official Go SDK for AWS, you can refer to AWS's [official documentation](https://aws.github.io/aws-sdk-go-v2/docs/configuring-sdk/) if you want to know more.
+
+```sh
+kubectl create secrets generic aws-secret \
+  --namespace phonebook-system \
+  --from-literal=accessKeyID=${ACCESS_KEY} \
+  --from-literal=secretAccessKey=${SECRET_KEY} \
+  --from-literal=sessionToken=${SESSION_TOKEN} \
+```
+
+Once created, you can pass the values of the secret to Phonebook's controller.
+
+```yaml
+provider: aws
+controller:
+  env:
+    - name: AWS_ZONE_ID
+      value: Z1111111111111
+  secrets:
+    name: "aws-secret"
+    keys:
+      - name: "AWS_ACCESS_KEY_ID"
+        key: "accessKeyID"
+      - name: "AWS_SECRET_ACCESS_KEY"
+        key: "secretAccessKey"
+      - name: "AWS_SESSION_TOKEN"
+        key: "sessionToken"
 ```
