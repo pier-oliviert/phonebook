@@ -10,6 +10,7 @@ spec:
   selector:
     matchLabels:
       control-plane: phonebook-controller
+      se.quencer.io/solver: phonebook-solver
   replicas: 1
   template:
     metadata:
@@ -17,6 +18,7 @@ spec:
         kubectl.kubernetes.io/default-container: controller
       labels:
         control-plane: phonebook-controller
+        se.quencer.io/solver: phonebook-solver
         {{- include "operator.labels" . | nindent 8 }}
     spec:
       affinity:
@@ -43,7 +45,11 @@ spec:
         args:
           - --leader-elect
           - --health-probe-bind-address=:8081
+        {{- if .Values.solver.enabled }}
+          - --solver
+        {{- end }}
         image: {{ .Values.controller.image }} 
+        imagePullPolicy: Never
         name: controller
         env:
           - name: PHONEBOOK_PROVIDER
@@ -76,6 +82,10 @@ spec:
             port: 8081
           initialDelaySeconds: 5
           periodSeconds: 10
+        {{- if .Values.solver.enabled }}
+        ports:
+          - containerPort: 4443
+        {{- end }}
         resources:
           limits:
             cpu: 500m
@@ -84,5 +94,16 @@ spec:
             cpu: 100m
             memory: 128Mi
         volumeMounts:
+        {{- if .Values.solver.enabled }}
+          - name: certs
+            mountPath: /tls
+            readOnly: true
+        {{- end }}
       serviceAccountName: phonebook-controller
       terminationGracePeriodSeconds: 10
+      {{- if .Values.solver.enabled }}
+      volumes:
+        - name: certs
+          secret:
+            secretName: {{ .Values.solver.privateKeySecretRef.name }}
+      {{- end }}
