@@ -1,2 +1,7 @@
+solver:
+  enabled: false
+  privateKeySecretRef:
+    name: phonebook-solver-ca
+
 controller:
   image: "ghcr.io/pier-oliviert/phonebook:v0.2"

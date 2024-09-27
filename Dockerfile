@@ -16,6 +16,7 @@ COPY cmd/main.go cmd/main.go
 COPY api/ api/
 COPY pkg/ pkg/
 COPY internal/controller/ internal/controller/
+COPY internal/solver/ internal/solver/
 
 # Build
 # the GOARCH has not a default value to allow the binary be built according to the host where the command
@@ -30,5 +31,7 @@ FROM gcr.io/distroless/static:nonroot
 WORKDIR /
 COPY --from=builder /workspace/controller .
 USER 65532:65532
+
+EXPOSE 4443
 
 ENTRYPOINT ["/controller"]
