@@ -31,9 +31,9 @@ spec:
 
 Here's a list of all supported providers. If you need a provider that isn't yet supported, create a new [issue](https://github.com/pier-oliviert/phonebook/issues/new).
 
-|||
-|--|--|
-|[AWS](https://pier-oliviert.github.io/phonebook/providers/aws/)|[Cloudflare](https://pier-oliviert.github.io/phonebook/providers/cloudflare/)|
+||||
+|--|--|--|
+|[AWS](https://pier-oliviert.github.io/phonebook/providers/aws/)|[Cloudflare](https://pier-oliviert.github.io/phonebook/providers/cloudflare/)|[Azure](https://pier-oliviert.github.io/phonebook/providers/azure/)
 
 ### Get Started
 
