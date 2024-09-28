@@ -97,8 +97,107 @@ func TestAliasTargetProperty(t *testing.T) {
 	}
 }
 
-func TestCreateDNSRecord(t *testing.T) {
-	// Create a fake record
+func TestResourceRecordSetWithTTL(t *testing.T) {
+	tests := []struct {
+		name     string
+		record   *phonebook.DNSRecord
+		expected int64
+	}{
+		{
+			name: "With custom TTL",
+			record: &phonebook.DNSRecord{
+				Spec: phonebook.DNSRecordSpec{
+					Zone:       "example.com",
+					Name:       "custom-ttl",
+					Targets:    []string{"1.2.3.4"},
+					RecordType: "A",
+					TTL:        to.Ptr(int(7200)),
+				},
+			},
+			expected: 7200,
+		},
+		{
+			name: "Without TTL (default)",
+			record: &phonebook.DNSRecord{
+				Spec: phonebook.DNSRecordSpec{
+					Zone:       "example.com",
+					Name:       "default-ttl",
+					Targets:    []string{"5.6.7.8"},
+					RecordType: "A",
+				},
+			},
+			expected: defaultTTL,
+		},
+	}
+
+	c := &azureDNS{
+		zoneName:      "example.com",
+		resourceGroup: "SomeResourceGroup",
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			params := c.resourceRecordSet(tt.record)
+			assert.Equal(t, tt.expected, *params.Properties.TTL)
+		})
+	}
+}
+
+func TestCreateDNSRecordWithTTL(t *testing.T) {
+	// Create a fake record with custom TTL
+	record := &phonebook.DNSRecord{
+		Spec: phonebook.DNSRecordSpec{
+			Zone:       "example.com",
+			Name:       "testrecord",
+			Targets:    []string{"1.2.3.4"},
+			RecordType: "A",
+			TTL:        to.Ptr(int(3600)),
+		},
+	}
+
+	// Create a mock RecordSetsClient
+	mockClient := new(MockRecordSetsClient)
+
+	// Set up expectations
+	mockClient.On("CreateOrUpdate",
+		mock.Anything,                           // context
+		"SomeResourceGroup",                     // resourceGroupName
+		"example.com",                           // zoneName
+		"testrecord",                            // relativeRecordSetName
+		armdns.RecordTypeA,                      // recordType
+		mock.AnythingOfType("armdns.RecordSet"), // parameters
+		mock.Anything,                           // options
+	).Run(func(args mock.Arguments) {
+		// Check if the TTL is correctly set in the parameters
+		params := args.Get(5).(armdns.RecordSet)
+		assert.Equal(t, int64(3600), *params.Properties.TTL)
+	}).Return(armdns.RecordSetsClientCreateOrUpdateResponse{
+		RecordSet: armdns.RecordSet{
+			ID: to.Ptr("fake-id"),
+		},
+	}, nil)
+
+	// Create the azureDNS client with the mock
+	c := &azureDNS{
+		zoneName:         "example.com",
+		resourceGroup:    "SomeResourceGroup",
+		recordSetsClient: mockClient,
+	}
+
+	// Perform the Create operation
+	err := c.Create(context.TODO(), record)
+
+	// Assert
+	assert.NoError(t, err)
+	assert.Equal(t, "Azure", record.Status.Provider)
+	assert.Equal(t, to.Ptr("fake-id"), record.Status.RemoteID)
+
+	// Verify that our expectations were met
+	mockClient.AssertExpectations(t)
+}
+
+func TestCreateDNSRecordWithDefaultTTL(t *testing.T) {
+	// Create a fake record without specifying TTL
 	record := &phonebook.DNSRecord{
 		Spec: phonebook.DNSRecordSpec{
 			Zone:       "example.com",
@@ -120,7 +219,11 @@ func TestCreateDNSRecord(t *testing.T) {
 		armdns.RecordTypeA,                      // recordType
 		mock.AnythingOfType("armdns.RecordSet"), // parameters
 		mock.Anything,                           // options
-	).Return(armdns.RecordSetsClientCreateOrUpdateResponse{
+	).Run(func(args mock.Arguments) {
+		// Check if the default TTL is correctly set in the parameters
+		params := args.Get(5).(armdns.RecordSet)
+		assert.Equal(t, int64(defaultTTL), *params.Properties.TTL)
+	}).Return(armdns.RecordSetsClientCreateOrUpdateResponse{
 		RecordSet: armdns.RecordSet{
 			ID: to.Ptr("fake-id"),
 		},

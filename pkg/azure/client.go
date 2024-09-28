@@ -20,6 +20,7 @@ const (
 	kAzureClientID       = "AZURE_CLIENT_ID"
 	kAzureClientSecret   = "AZURE_CLIENT_SECRET"
 	kAzureTenantID       = "AZURE_TENANT_ID"
+	defaultTTL           = 60 // Default TTL for DNS records in seconds if not specified
 )
 
 type azureDNS struct {
@@ -98,7 +99,7 @@ func (c *azureDNS) Create(ctx context.Context, record *phonebook.DNSRecord) erro
 	record.Status.RemoteID = response.ID
 
 	// Log the record creation to the console
-	log.FromContext(ctx).Info("[Provider] Azure DNS Record Created", "Name", record.Spec.Name, "Type", record.Spec.RecordType, "Targets", record.Spec.Targets)
+	log.FromContext(ctx).Info("[Provider] Azure DNS Record Created", "Name", record.Spec.Name, "Type", record.Spec.RecordType, "Targets", record.Spec.Targets, "TTL", *params.Properties.TTL)
 	return nil
 }
 
@@ -120,18 +121,25 @@ func (c *azureDNS) Delete(ctx context.Context, record *phonebook.DNSRecord) erro
 
 // Convert a DNSRecord to an Azure DNS record set
 func (c *azureDNS) resourceRecordSet(record *phonebook.DNSRecord) armdns.RecordSet {
+	ttl := defaultTTL
+	if record.Spec.TTL != nil {
+		ttl = *record.Spec.TTL
+	}
+
 	params := armdns.RecordSet{
 		Properties: &armdns.RecordSetProperties{
-			TTL: to.Ptr(int64(60)),
+			TTL: to.Ptr(int64(ttl)),
 		},
 	}
 
 	// Create specific record types based on the DNS type (e.g., A, CNAME)
 	switch armdns.RecordType(record.Spec.RecordType) {
 	case armdns.RecordTypeA:
-		params.Properties.ARecords = []*armdns.ARecord{
-			{IPv4Address: to.Ptr(record.Spec.Targets[0])},
+		aRecords := make([]*armdns.ARecord, len(record.Spec.Targets))
+		for i, target := range record.Spec.Targets {
+			aRecords[i] = &armdns.ARecord{IPv4Address: to.Ptr(target)}
 		}
+		params.Properties.ARecords = aRecords
 	case armdns.RecordTypeCNAME:
 		params.Properties.CnameRecord = &armdns.CnameRecord{
 			Cname: to.Ptr(record.Spec.Targets[0]),
