@@ -14,8 +14,8 @@ import (
 
 const (
 	kAWSZoneID = "AWS_ZONE_ID"
-
 	AliasTarget = "AliasHostedZoneID"
+	defaultTTL = 60 // Default TTL for DNS records in seconds if not specified
 )
 
 type r53 struct {
@@ -85,8 +85,16 @@ func (c *r53) resourceRecordSet(record *phonebook.DNSRecord) *types.ResourceReco
 		Type: types.RRType(record.Spec.RecordType),
 	}
 
-	set.TTL = new(int64)
-	*set.TTL = 60
+	// Set TTL
+	ttl := defaultTTL
+	if record.Spec.TTL != nil {
+		ttl = int(*record.Spec.TTL)
+	}
+	// convert our int to int64 because that's what the AWS SDK expects
+	// TODO: I should probably just change the default TTL to int64 or int32 to begin with, but I need to check the other providers
+	ttl64 := int64(ttl)
+	set.TTL = &ttl64
+
 
 	if hostedZoneID, ok := record.Spec.Properties[AliasTarget]; ok {
 		// User specified Alias Hosted Zone ID. As such, Phonebook will
@@ -98,17 +106,32 @@ func (c *r53) resourceRecordSet(record *phonebook.DNSRecord) *types.ResourceReco
 		// information about this.
 		//
 		// 1. https://docs.aws.amazon.com/Route53/latest/APIReference/API_AliasTarget.html
+
 		set.AliasTarget = &types.AliasTarget{
 			DNSName:      &record.Spec.Targets[0],
 			HostedZoneId: &hostedZoneID,
 		}
-
-		return &set
+		// Note: For Alias records, TTL is not used and should be omitted
+		set.TTL = nil
+	} else {
+		// Handle different record types
+		switch types.RRType(record.Spec.RecordType) {
+		case types.RRTypeA, types.RRTypeAaaa, types.RRTypeCname, types.RRTypeTxt:
+			set.ResourceRecords = make([]types.ResourceRecord, len(record.Spec.Targets))
+			for i, target := range record.Spec.Targets {
+				set.ResourceRecords[i] = types.ResourceRecord{Value: &target}
+			}
+		case types.RRTypeMx:
+			set.ResourceRecords = make([]types.ResourceRecord, len(record.Spec.Targets))
+			for i, target := range record.Spec.Targets {
+				// Assuming MX records are in the format "priority target"
+				set.ResourceRecords[i] = types.ResourceRecord{Value: &target}
+			}
+		default:
+			// For unsupported types, just use the first target
+			set.ResourceRecords = []types.ResourceRecord{{Value: &record.Spec.Targets[0]}}
+		}
 	}
-
-	set.ResourceRecords = append(set.ResourceRecords, types.ResourceRecord{
-		Value: &record.Spec.Targets[0],
-	})
 
 	return &set
 }
