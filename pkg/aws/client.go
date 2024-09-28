@@ -127,6 +127,13 @@ func (c *r53) resourceRecordSet(record *phonebook.DNSRecord) *types.ResourceReco
 				// Assuming MX records are in the format "priority target"
 				set.ResourceRecords[i] = types.ResourceRecord{Value: &target}
 			}
+		case types.RRTypeSrv:
+			set.ResourceRecords = make([]types.ResourceRecord, len(record.Spec.Targets))
+			for i, target := range record.Spec.Targets {
+				// Assuming SRV records are in the format "priority weight port target"
+				set.ResourceRecords[i] = types.ResourceRecord{Value: &target}
+			}
+
 		default:
 			// For unsupported types, just use the first target
 			set.ResourceRecords = []types.ResourceRecord{{Value: &record.Spec.Targets[0]}}
