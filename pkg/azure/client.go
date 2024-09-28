@@ -3,6 +3,8 @@ package azure
 import (
 	"context"
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
@@ -30,6 +32,15 @@ type azureDNS struct {
 		CreateOrUpdate(ctx context.Context, resourceGroupName string, zoneName string, relativeRecordSetName string, recordType armdns.RecordType, parameters armdns.RecordSet, options *armdns.RecordSetsClientCreateOrUpdateOptions) (armdns.RecordSetsClientCreateOrUpdateResponse, error)
 		Delete(ctx context.Context, resourceGroupName string, zoneName string, relativeRecordSetName string, recordType armdns.RecordType, options *armdns.RecordSetsClientDeleteOptions) (armdns.RecordSetsClientDeleteResponse, error)
 	}
+}
+
+// Helper function to convert string to *int32
+func toInt32Ptr(s string) *int32 {
+	i, err := strconv.Atoi(s)
+	if err != nil {
+		return nil
+	}
+	return to.Ptr(int32(i))
 }
 
 // NewClient initializes an Azure DNS client
@@ -132,7 +143,7 @@ func (c *azureDNS) resourceRecordSet(record *phonebook.DNSRecord) armdns.RecordS
 		},
 	}
 
-	// Create specific record types based on the DNS type (e.g., A, CNAME)
+	// Create specific record types based on the DNS type
 	switch armdns.RecordType(record.Spec.RecordType) {
 	case armdns.RecordTypeA:
 		aRecords := make([]*armdns.ARecord, len(record.Spec.Targets))
@@ -140,10 +151,61 @@ func (c *azureDNS) resourceRecordSet(record *phonebook.DNSRecord) armdns.RecordS
 			aRecords[i] = &armdns.ARecord{IPv4Address: to.Ptr(target)}
 		}
 		params.Properties.ARecords = aRecords
+
+	case armdns.RecordTypeAAAA:
+		aaaaRecords := make([]*armdns.AaaaRecord, len(record.Spec.Targets))
+		for i, target := range record.Spec.Targets {
+			aaaaRecords[i] = &armdns.AaaaRecord{IPv6Address: to.Ptr(target)}
+		}
+		params.Properties.AaaaRecords = aaaaRecords
+
 	case armdns.RecordTypeCNAME:
+		// CNAME can only have one target
 		params.Properties.CnameRecord = &armdns.CnameRecord{
 			Cname: to.Ptr(record.Spec.Targets[0]),
 		}
+
+	case armdns.RecordTypeMX:
+		mxRecords := make([]*armdns.MxRecord, len(record.Spec.Targets))
+		for i, target := range record.Spec.Targets {
+			parts := strings.SplitN(target, " ", 2)
+			if len(parts) != 2 {
+				continue // Skip invalid entries
+			}
+			mxRecords[i] = &armdns.MxRecord{
+				Preference: toInt32Ptr(parts[0]),
+				Exchange:   to.Ptr(parts[1]),
+			}
+		}
+		params.Properties.MxRecords = mxRecords
+
+	case armdns.RecordTypeTXT:
+		txtRecords := make([]*armdns.TxtRecord, len(record.Spec.Targets))
+		for i, target := range record.Spec.Targets {
+			txtRecords[i] = &armdns.TxtRecord{Value: []*string{to.Ptr(target)}}
+		}
+		params.Properties.TxtRecords = txtRecords
+
+	case armdns.RecordTypeSRV:
+		srvRecords := make([]*armdns.SrvRecord, len(record.Spec.Targets))
+		for i, target := range record.Spec.Targets {
+			parts := strings.Split(target, " ")
+			if len(parts) != 4 {
+				continue // Skip invalid entries
+			}
+			srvRecords[i] = &armdns.SrvRecord{
+				Priority: toInt32Ptr(parts[0]),
+				Weight:   toInt32Ptr(parts[1]),
+				Port:     toInt32Ptr(parts[2]),
+				Target:   to.Ptr(parts[3]),
+			}
+		}
+		params.Properties.SrvRecords = srvRecords
+
+	default:
+		// For unsupported types, log a warning and use the first target
+		log.FromContext(context.Background()).Info("Unsupported record type", "type", record.Spec.RecordType)
+		params.Properties.ARecords = []*armdns.ARecord{{IPv4Address: to.Ptr(record.Spec.Targets[0])}}
 	}
 
 	return params
