@@ -3,7 +3,6 @@ package azure
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
@@ -34,14 +33,7 @@ type azureDNS struct {
 	}
 }
 
-// Helper function to convert string to *int32
-func toInt32Ptr(s string) *int32 {
-	i, err := strconv.Atoi(s)
-	if err != nil {
-		return nil
-	}
-	return to.Ptr(int32(i))
-}
+
 
 // NewClient initializes an Azure DNS client
 func NewClient(ctx context.Context) (*azureDNS, error) {
