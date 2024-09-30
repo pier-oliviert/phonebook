@@ -62,7 +62,7 @@ func (c *cf) Create(ctx context.Context, record *phonebook.DNSRecord) error {
 	// It doesn't seem the cloudflare api library has a way of supporting multiple targets
 	// I tried to create multiple entries for the same hostname in the CF dashboard and it provides an error, so I'm assuming it's not supported. Shame.
 	if len(record.Spec.Targets) > 1 {
-		log.FromContext(context.Background()).Info("Cloudflare does not support multiple targets. Selecting first entry")
+		log.FromContext(ctx).Info("Cloudflare does not support multiple targets. Selecting first entry")
 		// set the first target as the content
 		dnsParams.Content = record.Spec.Targets[0]
 	}
