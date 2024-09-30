@@ -111,7 +111,7 @@ func TestResourceRecordSetWithTTL(t *testing.T) {
 					Name:       "custom-ttl",
 					Targets:    []string{"1.2.3.4"},
 					RecordType: "A",
-					TTL:        to.Ptr(int(7200)),
+					TTL:        to.Ptr(int64(7200)),
 				},
 			},
 			expected: 7200,
@@ -151,7 +151,7 @@ func TestCreateDNSRecordWithTTL(t *testing.T) {
 			Name:       "testrecord",
 			Targets:    []string{"1.2.3.4"},
 			RecordType: "A",
-			TTL:        to.Ptr(int(3600)),
+			TTL:        to.Ptr(int64(3600)),
 		},
 	}
 

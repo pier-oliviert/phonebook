@@ -21,7 +21,7 @@ const (
 	kAzureClientID       = "AZURE_CLIENT_ID"
 	kAzureClientSecret   = "AZURE_CLIENT_SECRET"
 	kAzureTenantID       = "AZURE_TENANT_ID"
-	defaultTTL           = 60 // Default TTL for DNS records in seconds if not specified
+	defaultTTL           = int64(60) // Default TTL for DNS records in seconds if not specified
 )
 
 type azureDNS struct {

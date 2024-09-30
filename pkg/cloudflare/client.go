@@ -13,7 +13,7 @@ import (
 
 const kCloudflareAPIKeyName = "CF_API_TOKEN"
 const kCloudflareZoneID = "CF_ZONE_ID"
-const defaultTTL = 60 // Default TTL for DNS records in seconds if not specified
+const defaultTTL = int64(60) // Default TTL for DNS records in seconds if not specified
 const kCloudflarePropertiesProxied = "proxied"
 
 type cf struct {
@@ -68,10 +68,12 @@ func (c *cf) Create(ctx context.Context, record *phonebook.DNSRecord) error {
 	}
 
 	// Set TTL
+	// The cloudflare library only accepts int, so we need to convert the int64 to int
+	// Shame because it means we have to type convert the default value as well, only for this provider.
 	if record.Spec.TTL != nil {
 		dnsParams.TTL = int(*record.Spec.TTL)
 	} else {
-		dnsParams.TTL = defaultTTL
+		dnsParams.TTL = int(defaultTTL)
 	}
 
 	if proxied, ok := record.Spec.Properties[kCloudflarePropertiesProxied]; ok {

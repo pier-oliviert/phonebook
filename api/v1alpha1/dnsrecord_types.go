@@ -58,7 +58,7 @@ type DNSRecordSpec struct {
 	// TTL is the Time To Live for the record. It represents the time
 	// in seconds that the record is cached by resolvers.
 	// If not set, the provider will use its default value (60 seconds).
-	TTL *int `json:"ttl,omitempty"`
+	TTL *int64 `json:"ttl,omitempty"`
 
 }
 

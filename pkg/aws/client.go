@@ -15,7 +15,7 @@ import (
 const (
 	kAWSZoneID = "AWS_ZONE_ID"
 	AliasTarget = "AliasHostedZoneID"
-	defaultTTL = 60 // Default TTL for DNS records in seconds if not specified
+	defaultTTL = int64(60) // Default TTL for DNS records in seconds if not specified
 )
 
 type r53 struct {
@@ -88,7 +88,7 @@ func (c *r53) resourceRecordSet(record *phonebook.DNSRecord) *types.ResourceReco
 	// Set TTL
 	ttl := defaultTTL
 	if record.Spec.TTL != nil {
-		ttl = int(*record.Spec.TTL)
+		ttl = int64(*record.Spec.TTL)
 	}
 	// convert our int to int64 because that's what the AWS SDK expects
 	// TODO: I should probably just change the default TTL to int64 or int32 to begin with, but I need to check the other providers
