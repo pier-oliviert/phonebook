@@ -52,7 +52,7 @@ func (c *r53) Create(ctx context.Context, record *phonebook.DNSRecord) error {
 		ChangeBatch: &types.ChangeBatch{
 			Changes: []types.Change{{
 				Action:            types.ChangeActionCreate,
-				ResourceRecordSet: c.resourceRecordSet(record),
+				ResourceRecordSet: c.resourceRecordSet(ctx, record),
 			}},
 		},
 	}
@@ -67,7 +67,7 @@ func (c *r53) Delete(ctx context.Context, record *phonebook.DNSRecord) error {
 		ChangeBatch: &types.ChangeBatch{
 			Changes: []types.Change{{
 				Action:            types.ChangeActionDelete,
-				ResourceRecordSet: c.resourceRecordSet(record),
+				ResourceRecordSet: c.resourceRecordSet(ctx, record),
 			}},
 		},
 	}
@@ -77,7 +77,7 @@ func (c *r53) Delete(ctx context.Context, record *phonebook.DNSRecord) error {
 }
 
 // Convert a DNSRecord to a resourceRecordSet
-func (c *r53) resourceRecordSet(record *phonebook.DNSRecord) *types.ResourceRecordSet {
+func (c *r53) resourceRecordSet(ctx context.Context, record *phonebook.DNSRecord) *types.ResourceRecordSet {
 	fullName := fmt.Sprintf("%s.%s", record.Spec.Name, record.Spec.Zone)
 
 	set := types.ResourceRecordSet{
@@ -133,7 +133,7 @@ func (c *r53) resourceRecordSet(record *phonebook.DNSRecord) *types.ResourceReco
 
 		default:
 			// For unsupported types, throw an error
-			return nil
+			log.FromContext(ctx).Error(fmt.Errorf("PB#4005: Unsupported record type"), "Record Type", record.Spec.RecordType)
 		}
 	}
 
