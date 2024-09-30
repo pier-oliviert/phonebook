@@ -66,7 +66,10 @@ func TestDNSNameConcatenation(t *testing.T) {
 		resourceGroup: "SomeResourceGroup",
 	}
 
-	params := c.resourceRecordSet(&record)
+	params, err := c.resourceRecordSet(context.TODO(), &record)
+	if err != nil {
+		t.Fatalf("resourceRecordSet failed: %v", err)
+	}
 
 	// Validate that the ARecord type is set for an A record
 	if len(params.Properties.ARecords) == 0 || *params.Properties.ARecords[0].IPv4Address != "127.0.0.1" {
@@ -89,7 +92,10 @@ func TestAliasTargetProperty(t *testing.T) {
 		resourceGroup: "SomeResourceGroup",
 	}
 
-	params := c.resourceRecordSet(&record)
+	params, err := c.resourceRecordSet(context.TODO(), &record)
+	if err != nil {
+		t.Fatalf("resourceRecordSet failed: %v", err)
+	}
 
 	// Validate that the CNAME record is properly set
 	if params.Properties.CnameRecord == nil || *params.Properties.CnameRecord.Cname != "alias.example.com" {
@@ -137,7 +143,10 @@ func TestResourceRecordSetWithTTL(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			params := c.resourceRecordSet(tt.record)
+			params, err := c.resourceRecordSet(context.TODO(), tt.record)
+			if err != nil {
+				t.Fatalf("resourceRecordSet failed: %v", err)
+			}
 			assert.Equal(t, tt.expected, *params.Properties.TTL)
 		})
 	}
