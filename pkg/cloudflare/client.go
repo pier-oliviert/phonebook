@@ -8,7 +8,6 @@ import (
 	client "github.com/cloudflare/cloudflare-go"
 	phonebook "github.com/pier-oliviert/phonebook/api/v1alpha1"
 	"github.com/pier-oliviert/phonebook/pkg/utils"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 const kCloudflareAPIKeyName = "CF_API_TOKEN"
@@ -62,9 +61,8 @@ func (c *cf) Create(ctx context.Context, record *phonebook.DNSRecord) error {
 	// It doesn't seem the cloudflare api library has a way of supporting multiple targets
 	// I tried to create multiple entries for the same hostname in the CF dashboard and it provides an error, so I'm assuming it's not supported. Shame.
 	if len(record.Spec.Targets) > 1 {
-		log.FromContext(ctx).Info("Cloudflare does not support multiple targets. Selecting first entry")
-		// set the first target as the content
-		dnsParams.Content = record.Spec.Targets[0]
+		// Throw an error if the user tries to create multiple targets for the same hostname
+		return fmt.Errorf("PB#4004: Cloudflare does not support multiple targets for the same hostname")
 	}
 
 	// Set TTL

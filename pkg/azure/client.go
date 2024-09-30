@@ -154,6 +154,13 @@ func (c *azureDNS) resourceRecordSet(ctx context.Context, record *phonebook.DNSR
 
 	case armdns.RecordTypeCNAME:
 		// CNAME can only have one target
+		// If Targets is more than one, throw an error
+		if len(record.Spec.Targets) > 1 {
+			err := fmt.Errorf("CNAME record can only have one target")
+			log.FromContext(ctx).Error(err, "CNAME record can only have one target")
+			return armdns.RecordSet{}, err
+		}
+
 		params.Properties.CnameRecord = &armdns.CnameRecord{
 			Cname: to.Ptr(record.Spec.Targets[0]),
 		}
@@ -186,7 +193,9 @@ func (c *azureDNS) resourceRecordSet(ctx context.Context, record *phonebook.DNSR
 		for i, target := range record.Spec.Targets {
 			parts := strings.Split(target, " ")
 			if len(parts) != 4 {
-				continue // Skip invalid entries
+				err := fmt.Errorf("invalid SRV record: %s", target)
+				log.FromContext(ctx).Error(err, "Invalid SRV record")
+				return armdns.RecordSet{}, err
 			}
 			srvRecords[i] = &armdns.SrvRecord{
 				Priority: toInt32Ptr(parts[0]),
@@ -198,9 +207,9 @@ func (c *azureDNS) resourceRecordSet(ctx context.Context, record *phonebook.DNSR
 		params.Properties.SrvRecords = srvRecords
 
 	default:
-		// For unsupported types, log a warning and use the first target
-		log.FromContext(context.Background()).Info("Unsupported record type", "type", record.Spec.RecordType)
-		params.Properties.ARecords = []*armdns.ARecord{{IPv4Address: to.Ptr(record.Spec.Targets[0])}}
+		// Unsupported record type and return an error
+		err := fmt.Errorf("unsupported record type: %s", record.Spec.RecordType)
+		log.FromContext(ctx).Error(err, "Unsupported record type")
 	}
 
 	return params, nil
