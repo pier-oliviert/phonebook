@@ -33,8 +33,6 @@ type azureDNS struct {
 	}
 }
 
-
-
 // NewClient initializes an Azure DNS client
 func NewClient(ctx context.Context) (*azureDNS, error) {
 	logger := log.FromContext(ctx)
@@ -127,83 +125,83 @@ func (c *azureDNS) Delete(ctx context.Context, record *phonebook.DNSRecord) erro
 
 // Convert a DNSRecord to an Azure DNS record set
 func (c *azureDNS) resourceRecordSet(ctx context.Context, record *phonebook.DNSRecord) (armdns.RecordSet, error) {
-    ttl := defaultTTL
-    if record.Spec.TTL != nil {
-        ttl = *record.Spec.TTL
-    }
+	ttl := defaultTTL
+	if record.Spec.TTL != nil {
+		ttl = *record.Spec.TTL
+	}
 
-    params := armdns.RecordSet{
-        Properties: &armdns.RecordSetProperties{
-            TTL: to.Ptr(int64(ttl)),
-        },
-    }
+	params := armdns.RecordSet{
+		Properties: &armdns.RecordSetProperties{
+			TTL: to.Ptr(int64(ttl)),
+		},
+	}
 
-    // Create specific record types based on the DNS type
-    switch armdns.RecordType(record.Spec.RecordType) {
-    case armdns.RecordTypeA:
-        aRecords := make([]*armdns.ARecord, len(record.Spec.Targets))
-        for i, target := range record.Spec.Targets {
-            aRecords[i] = &armdns.ARecord{IPv4Address: to.Ptr(target)}
-        }
-        params.Properties.ARecords = aRecords
+	// Create specific record types based on the DNS type
+	switch armdns.RecordType(record.Spec.RecordType) {
+	case armdns.RecordTypeA:
+		aRecords := make([]*armdns.ARecord, len(record.Spec.Targets))
+		for i, target := range record.Spec.Targets {
+			aRecords[i] = &armdns.ARecord{IPv4Address: to.Ptr(target)}
+		}
+		params.Properties.ARecords = aRecords
 
-    case armdns.RecordTypeAAAA:
-        aaaaRecords := make([]*armdns.AaaaRecord, len(record.Spec.Targets))
-        for i, target := range record.Spec.Targets {
-            aaaaRecords[i] = &armdns.AaaaRecord{IPv6Address: to.Ptr(target)}
-        }
-        params.Properties.AaaaRecords = aaaaRecords
+	case armdns.RecordTypeAAAA:
+		aaaaRecords := make([]*armdns.AaaaRecord, len(record.Spec.Targets))
+		for i, target := range record.Spec.Targets {
+			aaaaRecords[i] = &armdns.AaaaRecord{IPv6Address: to.Ptr(target)}
+		}
+		params.Properties.AaaaRecords = aaaaRecords
 
-    case armdns.RecordTypeCNAME:
-        // CNAME can only have one target
-        params.Properties.CnameRecord = &armdns.CnameRecord{
-            Cname: to.Ptr(record.Spec.Targets[0]),
-        }
+	case armdns.RecordTypeCNAME:
+		// CNAME can only have one target
+		params.Properties.CnameRecord = &armdns.CnameRecord{
+			Cname: to.Ptr(record.Spec.Targets[0]),
+		}
 
-    case armdns.RecordTypeMX:
-        mxRecords := make([]*armdns.MxRecord, len(record.Spec.Targets))
-        for i, target := range record.Spec.Targets {
-            parts := strings.SplitN(target, " ", 2)
-            if len(parts) != 2 {
-                err := fmt.Errorf("invalid MX record: %s", target)
-                log.FromContext(ctx).Error(err, "Invalid MX record")
-                return armdns.RecordSet{}, err
-            }
-            mxRecords[i] = &armdns.MxRecord{
-                Preference: toInt32Ptr(parts[0]),
-                Exchange:   to.Ptr(parts[1]),
-            }
-        }
-        params.Properties.MxRecords = mxRecords
+	case armdns.RecordTypeMX:
+		mxRecords := make([]*armdns.MxRecord, len(record.Spec.Targets))
+		for i, target := range record.Spec.Targets {
+			parts := strings.SplitN(target, " ", 2)
+			if len(parts) != 2 {
+				err := fmt.Errorf("invalid MX record: %s", target)
+				log.FromContext(ctx).Error(err, "Invalid MX record")
+				return armdns.RecordSet{}, err
+			}
+			mxRecords[i] = &armdns.MxRecord{
+				Preference: toInt32Ptr(parts[0]),
+				Exchange:   to.Ptr(parts[1]),
+			}
+		}
+		params.Properties.MxRecords = mxRecords
 
-    case armdns.RecordTypeTXT:
-        txtRecords := make([]*armdns.TxtRecord, len(record.Spec.Targets))
-        for i, target := range record.Spec.Targets {
-            txtRecords[i] = &armdns.TxtRecord{Value: []*string{to.Ptr(target)}}
-        }
-        params.Properties.TxtRecords = txtRecords
+	case armdns.RecordTypeTXT:
+		txtRecords := make([]*armdns.TxtRecord, len(record.Spec.Targets))
+		for i, target := range record.Spec.Targets {
+			txtRecords[i] = &armdns.TxtRecord{Value: []*string{to.Ptr(target)}}
+		}
+		params.Properties.TxtRecords = txtRecords
 
-    case armdns.RecordTypeSRV:
-        srvRecords := make([]*armdns.SrvRecord, len(record.Spec.Targets))
-        for i, target := range record.Spec.Targets {
-            parts := strings.Split(target, " ")
-            if len(parts) != 4 {
-                continue // Skip invalid entries
-            }
-            srvRecords[i] = &armdns.SrvRecord{
-                Priority: toInt32Ptr(parts[0]),
-                Weight:   toInt32Ptr(parts[1]),
-                Port:     toInt32Ptr(parts[2]),
-                Target:   to.Ptr(parts[3]),
-            }
-        }
-        params.Properties.SrvRecords = srvRecords
+	case armdns.RecordTypeSRV:
+		srvRecords := make([]*armdns.SrvRecord, len(record.Spec.Targets))
+		for i, target := range record.Spec.Targets {
+			parts := strings.Split(target, " ")
+			if len(parts) != 4 {
+				continue // Skip invalid entries
+			}
+			srvRecords[i] = &armdns.SrvRecord{
+				Priority: toInt32Ptr(parts[0]),
+				Weight:   toInt32Ptr(parts[1]),
+				Port:     toInt32Ptr(parts[2]),
+				Target:   to.Ptr(parts[3]),
+			}
+		}
+		params.Properties.SrvRecords = srvRecords
 
-    default:
-        // For unsupported types, log a warning and use the first target
-        log.FromContext(context.Background()).Info("Unsupported record type", "type", record.Spec.RecordType)
-        params.Properties.ARecords = []*armdns.ARecord{{IPv4Address: to.Ptr(record.Spec.Targets[0])}}
-    }
+	default:
+		// For unsupported types, log a warning and use the first target
+		log.FromContext(context.Background()).Info("Unsupported record type", "type", record.Spec.RecordType)
+		params.Properties.ARecords = []*armdns.ARecord{{IPv4Address: to.Ptr(record.Spec.Targets[0])}}
+	}
 
-    return params, nil
+	return params, nil
 }

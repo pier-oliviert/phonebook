@@ -39,13 +39,12 @@ func (m *mockAPI) DeleteDNSRecord(ctx context.Context, zoneID string, recordID s
 	return nil
 }
 
-
 func (c *cft) CreateDNSRecord(ctx context.Context, record *phonebook.DNSRecord) error {
 	params := client.CreateDNSRecordParams{
 		Type:    record.Spec.RecordType,
 		Name:    record.Spec.Name,
 		Content: record.Spec.Targets[0], // Assuming the first target is the content
-		TTL:     1, // You might want to make this configurable
+		TTL:     1,                      // You might want to make this configurable
 	}
 
 	response, err := c.API.CreateDNSRecord(ctx, c.zoneID, params)

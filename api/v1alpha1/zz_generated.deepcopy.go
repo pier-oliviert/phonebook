@@ -100,7 +100,7 @@ func (in *DNSRecordSpec) DeepCopyInto(out *DNSRecordSpec) {
 	}
 	if in.TTL != nil {
 		in, out := &in.TTL, &out.TTL
-		*out = new(int)
+		*out = new(int64)
 		**out = **in
 	}
 }

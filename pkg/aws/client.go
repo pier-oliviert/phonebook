@@ -13,9 +13,9 @@ import (
 )
 
 const (
-	kAWSZoneID = "AWS_ZONE_ID"
+	kAWSZoneID  = "AWS_ZONE_ID"
 	AliasTarget = "AliasHostedZoneID"
-	defaultTTL = int64(60) // Default TTL for DNS records in seconds if not specified
+	defaultTTL  = int64(60) // Default TTL for DNS records in seconds if not specified
 )
 
 type r53 struct {
@@ -94,7 +94,6 @@ func (c *r53) resourceRecordSet(record *phonebook.DNSRecord) *types.ResourceReco
 	// TODO: I should probably just change the default TTL to int64 or int32 to begin with, but I need to check the other providers
 	ttl64 := int64(ttl)
 	set.TTL = &ttl64
-
 
 	if hostedZoneID, ok := record.Spec.Properties[AliasTarget]; ok {
 		// User specified Alias Hosted Zone ID. As such, Phonebook will
