@@ -22,6 +22,7 @@ spec:
   name: helloworld
   targets:
     - 127.0.0.1
+    - 127.0.0.2 # If provider supports multi-target    
 ```
 
 ![A DNS Record](status.png)
@@ -33,6 +34,8 @@ spec:
 - Support all DNS Record Types (A, AAAA, TXT, CNAME, etc.)
 - Support cloud provider specific properties 
 - Proper error handling per DNS Record
+- Allows specifying TTL
+- Allows multiple targets on providers with multi support (Azure, AWS)
 
 ## Providers
 

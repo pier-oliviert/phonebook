@@ -12,7 +12,7 @@ import (
 
 const kCloudflareAPIKeyName = "CF_API_TOKEN"
 const kCloudflareZoneID = "CF_ZONE_ID"
-
+const defaultTTL = int64(60) // Default TTL for DNS records in seconds if not specified
 const kCloudflarePropertiesProxied = "proxied"
 
 type cf struct {
@@ -56,6 +56,22 @@ func (c *cf) Create(ctx context.Context, record *phonebook.DNSRecord) error {
 		Type:    record.Spec.RecordType,
 		Name:    record.Spec.Name,
 		Content: record.Spec.Targets[0],
+	}
+
+	// It doesn't seem the cloudflare api library has a way of supporting multiple targets
+	// I tried to create multiple entries for the same hostname in the CF dashboard and it provides an error, so I'm assuming it's not supported. Shame.
+	if len(record.Spec.Targets) > 1 {
+		// Throw an error if the user tries to create multiple targets for the same hostname
+		return fmt.Errorf("PB#4004: Cloudflare does not support multiple targets for the same hostname")
+	}
+
+	// Set TTL
+	// The cloudflare library only accepts int, so we need to convert the int64 to int
+	// Shame because it means we have to type convert the default value as well, only for this provider.
+	if record.Spec.TTL != nil {
+		dnsParams.TTL = int(*record.Spec.TTL)
+	} else {
+		dnsParams.TTL = int(defaultTTL)
 	}
 
 	if proxied, ok := record.Spec.Properties[kCloudflarePropertiesProxied]; ok {
