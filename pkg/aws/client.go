@@ -88,12 +88,10 @@ func (c *r53) resourceRecordSet(record *phonebook.DNSRecord) *types.ResourceReco
 	// Set TTL
 	ttl := defaultTTL
 	if record.Spec.TTL != nil {
-		ttl = int64(*record.Spec.TTL)
+		ttl = *record.Spec.TTL
 	}
-	// convert our int to int64 because that's what the AWS SDK expects
-	// TODO: I should probably just change the default TTL to int64 or int32 to begin with, but I need to check the other providers
-	ttl64 := int64(ttl)
-	set.TTL = &ttl64
+
+	set.TTL = &ttl
 
 	if hostedZoneID, ok := record.Spec.Properties[AliasTarget]; ok {
 		// User specified Alias Hosted Zone ID. As such, Phonebook will
@@ -134,8 +132,8 @@ func (c *r53) resourceRecordSet(record *phonebook.DNSRecord) *types.ResourceReco
 			}
 
 		default:
-			// For unsupported types, just use the first target
-			set.ResourceRecords = []types.ResourceRecord{{Value: &record.Spec.Targets[0]}}
+			// For unsupported types, throw an error
+			return nil
 		}
 	}
 
