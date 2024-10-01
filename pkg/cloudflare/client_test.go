@@ -71,7 +71,7 @@ func (c *cft) Delete(ctx context.Context, record *phonebook.DNSRecord) error {
 func TestNewClient(t *testing.T) {
 	// Test missing API Key
 	_, err := NewClient(context.TODO())
-	if err == nil || !strings.HasPrefix(err.Error(), "PB#0100: API Key not found --") {
+	if err == nil || !strings.HasPrefix(err.Error(), "PB-CF-#0001: API Key not found --") {
 		t.Error("Expected error for missing API Key")
 	}
 
@@ -80,7 +80,7 @@ func TestNewClient(t *testing.T) {
 
 	// Test missing Zone ID
 	_, err = NewClient(context.TODO())
-	if err == nil || !strings.HasPrefix(err.Error(), "PB#0100: Zone ID not found --") {
+	if err == nil || !strings.HasPrefix(err.Error(), "PB-CF-#0002: Zone ID not found --") {
 		t.Error("Expected error for missing Zone ID")
 	}
 
