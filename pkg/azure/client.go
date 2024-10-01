@@ -39,44 +39,44 @@ func NewClient(ctx context.Context) (*azureDNS, error) {
 
 	clientID, err := utils.RetrieveValueFromEnvOrFile(kAzureClientID)
 	if err != nil {
-		return nil, fmt.Errorf("PB#0104: Azure Client ID not found -- %w", err)
+		return nil, fmt.Errorf("PB-AZ-#0001: Azure Client ID not found -- %w", err)
 	}
 
 	clientSecret, err := utils.RetrieveValueFromEnvOrFile(kAzureClientSecret)
 	if err != nil {
-		return nil, fmt.Errorf("PB#0105: Azure Client Secret not found -- %w", err)
+		return nil, fmt.Errorf("PB-AZ-#0002: Azure Client Secret not found -- %w", err)
 	}
 
 	tenantID, err := utils.RetrieveValueFromEnvOrFile(kAzureTenantID)
 	if err != nil {
-		return nil, fmt.Errorf("PB#0106: Azure Tenant ID not found -- %w", err)
+		return nil, fmt.Errorf("PB-AZ-#0003: Azure Tenant ID not found -- %w", err)
 	}
 
 	subscriptionID, err := utils.RetrieveValueFromEnvOrFile(kAzureSubscriptionID)
 	if err != nil {
-		return nil, fmt.Errorf("PB#0101: Azure Subscription ID not found -- %w", err)
+		return nil, fmt.Errorf("PB-AZ-#0004: Azure Subscription ID not found -- %w", err)
 	}
 
 	zoneName, err := utils.RetrieveValueFromEnvOrFile(kAzureZoneName)
 	if err != nil {
-		return nil, fmt.Errorf("PB#0102: Azure Zone Name not found -- %w", err)
+		return nil, fmt.Errorf("PB-AZ-#0005: Azure Zone Name not found -- %w", err)
 	}
 
 	resourceGroup, err := utils.RetrieveValueFromEnvOrFile(kAzureResourceGroup)
 	if err != nil {
-		return nil, fmt.Errorf("PB#0103: Azure Resource Group not found -- %w", err)
+		return nil, fmt.Errorf("PB-AZ-#0006: Azure Resource Group not found -- %w", err)
 	}
 
 	// Create the credential
 	credential, err := azidentity.NewClientSecretCredential(tenantID, clientID, clientSecret, nil)
 	if err != nil {
-		return nil, fmt.Errorf("unable to create Azure credential: %w", err)
+		return nil, fmt.Errorf("PB-AZ-#0007: Unable to create Azure credential: %w", err)
 	}
 
 	// Initialize the DNS client
 	dnsClient, err := armdns.NewRecordSetsClient(subscriptionID, credential, &arm.ClientOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("unable to create Azure DNS client: %w", err)
+		return nil, fmt.Errorf("PB-AZ-#0008: Unable to create Azure DNS client: %w", err)
 	}
 
 	logger.Info("[Provider] Azure Configured", "Zone Name", zoneName, "Resource Group", resourceGroup)
@@ -92,11 +92,11 @@ func NewClient(ctx context.Context) (*azureDNS, error) {
 func (c *azureDNS) Create(ctx context.Context, record *phonebook.DNSRecord) error {
 	params, err := c.resourceRecordSet(ctx, record)
 	if err != nil {
-		return fmt.Errorf("failed to create resource record set: %w", err)
+		return fmt.Errorf("PB-AZ-#0009: Failed to create resource record set: %w", err)
 	}
 	response, err := c.recordSetsClient.CreateOrUpdate(ctx, c.resourceGroup, c.zoneName, record.Spec.Name, armdns.RecordType(record.Spec.RecordType), params, nil)
 	if err != nil {
-		return fmt.Errorf("failed to create Azure DNS record: %w", err)
+		return fmt.Errorf("PB-AZ-#0010: Failed to create Azure DNS record: %w", err)
 	}
 
 	record.Status.Provider = "Azure"
@@ -111,7 +111,7 @@ func (c *azureDNS) Create(ctx context.Context, record *phonebook.DNSRecord) erro
 func (c *azureDNS) Delete(ctx context.Context, record *phonebook.DNSRecord) error {
 	_, err := c.recordSetsClient.Delete(ctx, c.resourceGroup, c.zoneName, record.Spec.Name, armdns.RecordType(record.Spec.RecordType), nil)
 	if err != nil {
-		return fmt.Errorf("failed to delete Azure DNS record: %w", err)
+		return fmt.Errorf("PB-AZ-#0011: failed to delete Azure DNS record: %w", err)
 	}
 
 	record.Status.Provider = "Azure"
@@ -156,8 +156,8 @@ func (c *azureDNS) resourceRecordSet(ctx context.Context, record *phonebook.DNSR
 		// CNAME can only have one target
 		// If Targets is more than one, throw an error
 		if len(record.Spec.Targets) > 1 {
-			err := fmt.Errorf("CNAME record can only have one target")
-			log.FromContext(ctx).Error(err, "CNAME record can only have one target")
+			err := fmt.Errorf("PB-AZ-#0012: CNAME record can only have one target")
+			log.FromContext(ctx).Error(err, "PB-AZ-#0012: CNAME record can only have one target")
 			return armdns.RecordSet{}, err
 		}
 
@@ -170,8 +170,8 @@ func (c *azureDNS) resourceRecordSet(ctx context.Context, record *phonebook.DNSR
 		for i, target := range record.Spec.Targets {
 			parts := strings.SplitN(target, " ", 2)
 			if len(parts) != 2 {
-				err := fmt.Errorf("invalid MX record: %s", target)
-				log.FromContext(ctx).Error(err, "Invalid MX record")
+				err := fmt.Errorf("PB-AZ-#0013: invalid MX record: %s", target)
+				log.FromContext(ctx).Error(err, "PB-AZ-#0013: Invalid MX record")
 				return armdns.RecordSet{}, err
 			}
 			mxRecords[i] = &armdns.MxRecord{
@@ -193,8 +193,8 @@ func (c *azureDNS) resourceRecordSet(ctx context.Context, record *phonebook.DNSR
 		for i, target := range record.Spec.Targets {
 			parts := strings.Split(target, " ")
 			if len(parts) != 4 {
-				err := fmt.Errorf("invalid SRV record: %s", target)
-				log.FromContext(ctx).Error(err, "Invalid SRV record")
+				err := fmt.Errorf("PB-AZ-#0014: Invalid SRV record: %s", target)
+				log.FromContext(ctx).Error(err, "PB-AZ-#0014: Invalid SRV record")
 				return armdns.RecordSet{}, err
 			}
 			srvRecords[i] = &armdns.SrvRecord{
@@ -208,8 +208,8 @@ func (c *azureDNS) resourceRecordSet(ctx context.Context, record *phonebook.DNSR
 
 	default:
 		// Unsupported record type and return an error
-		err := fmt.Errorf("unsupported record type: %s", record.Spec.RecordType)
-		log.FromContext(ctx).Error(err, "Unsupported record type")
+		err := fmt.Errorf("PB-AZ-#0015: Unsupported record type: %s", record.Spec.RecordType)
+		log.FromContext(ctx).Error(err, "PB-AZ-#0015: Unsupported record type")
 	}
 
 	return params, nil

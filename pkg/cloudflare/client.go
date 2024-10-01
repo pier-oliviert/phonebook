@@ -30,19 +30,19 @@ type cf struct {
 func NewClient(ctx context.Context) (*cf, error) {
 	token, err := utils.RetrieveValueFromEnvOrFile(kCloudflareAPIKeyName)
 	if err != nil {
-		return nil, fmt.Errorf("PB#0100: API Key not found -- %w", err)
+		return nil, fmt.Errorf("PB-CF-#0001: API Key not found -- %w", err)
 	}
 
 	zoneID, err := utils.RetrieveValueFromEnvOrFile(kCloudflareZoneID)
 	if err != nil {
-		return nil, fmt.Errorf("PB#0100: Zone ID not found -- %w", err)
+		return nil, fmt.Errorf("PB-CF-#0002: Zone ID not found -- %w", err)
 	}
 
 	// Trimming space in case the user included a space when copying the token over. This small
 	// quality of life fix might just make it easier to work with token (debugging white spaces when trying new tools can be frustrating)
 	api, err := client.NewWithAPIToken(strings.TrimSpace(token))
 	if err != nil {
-		return nil, fmt.Errorf("PB#4003: Could not create new Cloudflare Client -- %w", err)
+		return nil, fmt.Errorf("PB-CF-#0003: Could not create new Cloudflare Client -- %w", err)
 	}
 
 	return &cf{
@@ -62,7 +62,7 @@ func (c *cf) Create(ctx context.Context, record *phonebook.DNSRecord) error {
 	// I tried to create multiple entries for the same hostname in the CF dashboard and it provides an error, so I'm assuming it's not supported. Shame.
 	if len(record.Spec.Targets) > 1 {
 		// Throw an error if the user tries to create multiple targets for the same hostname
-		return fmt.Errorf("PB#4004: Cloudflare does not support multiple targets for the same hostname")
+		return fmt.Errorf("PB-CF-#0004: Cloudflare does not support multiple targets for the same hostname")
 	}
 
 	// Set TTL
@@ -81,7 +81,7 @@ func (c *cf) Create(ctx context.Context, record *phonebook.DNSRecord) error {
 
 	response, err := c.CreateDNSRecord(ctx, client.ZoneIdentifier(c.zoneID), dnsParams)
 	if err != nil {
-		return err
+		return fmt.Errorf("PB-CF-#0005: Failed to create DNS record -- %w", err)
 	}
 
 	record.Status.RemoteID = new(string)
@@ -97,5 +97,9 @@ func (c *cf) Delete(ctx context.Context, record *phonebook.DNSRecord) error {
 		return nil
 	}
 
-	return c.DeleteDNSRecord(ctx, client.ZoneIdentifier(c.zoneID), *record.Status.RemoteID)
+	err := c.DeleteDNSRecord(ctx, client.ZoneIdentifier(c.zoneID), *record.Status.RemoteID)
+	if err != nil {
+		return fmt.Errorf("PB-CF-#0006: Failed to delete DNS record -- %w", err)
+	}
+	return nil
 }
