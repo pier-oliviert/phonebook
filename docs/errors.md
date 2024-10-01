@@ -41,3 +41,9 @@ This is a list of all errors that are coded (PB#_NUM_: ...) in Phonebook. The li
 
 
 ## Cloudflare
+|Number|Title|Description|
+|:----|-|-|
+|PB-CF-#0001|API Key Not Found|Phonebook failed to find a valid Cloudflare API key from a secret or env-var|
+|PB-CF-#0002|Zone ID Not Found|Phonebook failed to find a valid Cloudflare Zone ID from a secret or env-var|
+|PB-CF-#0003|Unable to Create Cloudflare Client|Phonebook was unable to create a Cloudflare client using the provided information|
+|PB-CF-#0004|Multiple Targets Not Supported|Phonebook attempted to create a DNS record with multiple targets, which is not supported by Cloudflare|
