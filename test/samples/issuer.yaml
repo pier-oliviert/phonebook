@@ -1,9 +1,8 @@
 ---
 apiVersion: cert-manager.io/v1
-kind: Issuer
+kind: ClusterIssuer
 metadata:
   name: phonebook-acme-issuer
-  namespace: phonebook-system
 spec:
   acme:
     email: "youremail@exmaple.com"
