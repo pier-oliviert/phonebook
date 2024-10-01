@@ -69,6 +69,13 @@ spec:
                 items:
                   type: string
                 type: array
+              ttl:
+                description: |-
+                  TTL is the Time To Live for the record. It represents the time
+                  in seconds that the record is cached by resolvers.
+                  If not set, the provider will use its default value (60 seconds).
+                format: int64
+                type: integer
               zone:
                 description: |-
                   Zone is the the DNS Zone that you want to create a record for.

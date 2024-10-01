@@ -11,7 +11,7 @@ import (
 
 func TestNewClient(t *testing.T) {
 	_, err := NewClient(context.TODO())
-	if !strings.HasPrefix(err.Error(), "PB#0100: Zone ID not found --") {
+	if !strings.HasPrefix(err.Error(), "PB-AWS-#0002: Zone ID not found --") {
 		t.Error("Client should require a Zone ID")
 	}
 
@@ -31,7 +31,7 @@ func TestDNSNameConcatenation(t *testing.T) {
 		zoneID: "MyZone123",
 	}
 
-	set := c.resourceRecordSet(&record)
+	set := c.resourceRecordSet(context.TODO(), &record)
 
 	if *set.Name != "subdomain.mydomain.com" {
 		t.Error("Expected name to include both zone and name", "Name", set.Name)
@@ -54,7 +54,7 @@ func TestAliastTargetProperty(t *testing.T) {
 		zoneID: "MyZone123",
 	}
 
-	set := c.resourceRecordSet(&record)
+	set := c.resourceRecordSet(context.TODO(), &record)
 
 	if len(set.ResourceRecords) > 0 {
 		t.Error("Expected record set to not have any resource records when using AliasTarget", "ResourceRecords", set.ResourceRecords)

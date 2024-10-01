@@ -15,8 +15,10 @@ spec:
   zone: mytestdomain.com
   recordType: A
   name: mysubdomain
+  ttl: 60
   targets:
     - 127.0.0.1
+    - 127.0.0.2 # If provider supports multi-target
 ```
 
 ### Features
@@ -26,7 +28,8 @@ spec:
 - Support all DNS Record Types (A, AAAA, TXT, CNAME, etc.)
 - Support cloud provider specific properties 
 - Proper error handling per DNS Record
-
+- Allows specifying TTL
+- Allows multiple targets on providers with multi support (Azure, AWS)
 ### Supported providers
 
 Here's a list of all supported providers. If you need a provider that isn't yet supported, create a new [issue](https://github.com/pier-oliviert/phonebook/issues/new).

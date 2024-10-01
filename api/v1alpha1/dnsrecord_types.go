@@ -54,6 +54,12 @@ type DNSRecordSpec struct {
 	// to configure a DNS Record in accordance to the provider used.
 	// Each provider provides its own set of custom fields.
 	Properties map[string]string `json:"properties,omitempty"`
+
+	// TTL is the Time To Live for the record. It represents the time
+	// in seconds that the record is cached by resolvers.
+	// If not set, the provider will use its default value (60 seconds).
+	TTL *int64 `json:"ttl,omitempty"`
+
 }
 
 // DNSRecordStatus defines the observed state of DNSRecord

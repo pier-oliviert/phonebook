@@ -22,6 +22,7 @@ spec:
   name: helloworld
   targets:
     - 127.0.0.1
+    - 127.0.0.2 # If provider supports multi-target    
 ```
 
 ![A DNS Record](status.png)
@@ -34,6 +35,8 @@ spec:
 - Support cloud provider specific properties 
 - Proper error handling per DNS Record
 - Generate wildcard SSL Certificate with Cert-Manager (Let's Encrypt)
+- Allows specifying TTL
+- Allows multiple targets on providers with multi support (Azure, AWS)
 
 ## Providers
 
