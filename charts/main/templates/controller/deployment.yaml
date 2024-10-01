@@ -49,7 +49,6 @@ spec:
           - --solver
         {{- end }}
         image: {{ .Values.controller.image }} 
-        imagePullPolicy: Never
         name: controller
         env:
           - name: PHONEBOOK_PROVIDER
