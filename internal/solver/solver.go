@@ -136,7 +136,7 @@ func (s *Solver) CleanUp(ch *whapi.ChallengeRequest) error {
 
 	label, err := labels.Parse(fmt.Sprintf("%s=%s", kChallengeLabel, kChallengeKey))
 	if err != nil {
-		return fmt.Errorf("PB#TODO: failed to parse the label selector -- %w", err)
+		return fmt.Errorf("PB#0004: failed to parse the label selector -- %w", err)
 	}
 
 	opts := client.ListOptions{
@@ -154,7 +154,7 @@ func (s *Solver) CleanUp(ch *whapi.ChallengeRequest) error {
 	for _, record := range challenges.Items {
 		if len(record.Spec.Targets) != 1 {
 			// Return error
-			return fmt.Errorf("PB#TODO: Record unexpectedly had more than one target: %v", record.Spec.Targets)
+			return fmt.Errorf("PB-SLV-0001: Record unexpectedly had more than one target: %v", record.Spec.Targets)
 		}
 
 		if record.Spec.Targets[0] == ch.Key {
