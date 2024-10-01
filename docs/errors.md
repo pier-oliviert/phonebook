@@ -38,7 +38,13 @@ This is a list of all errors that are coded (PB#_NUM_: ...) in Phonebook. The li
 |PB-AZ-#0015|Unsupported Record Type|Phonebook encountered an unsupported DNS record type for Azure DNS|
 
 ## AWS
-
+|Number|Title|Description|
+|:----|-|-|
+|PB-AWS-#0001|Failed to Load AWS Configuration|Phonebook failed to load the AWS configuration|
+|PB-AWS-#0002|Zone ID Not Found|Phonebook failed to find a valid AWS Zone ID from a secret or env-var|
+|PB-AWS-#0003|Failed to Create DNS Record|Phonebook failed to create a DNS record in AWS Route 53|
+|PB-AWS-#0004|Failed to Delete DNS Record|Phonebook failed to delete a DNS record in AWS Route 53|
+|PB-AWS-#0005|Unsupported Record Type|Phonebook encountered an unsupported DNS record type for AWS Route 53|
 
 ## Cloudflare
 |Number|Title|Description|

@@ -31,11 +31,11 @@ func NewClient(ctx context.Context) (*r53, error) {
 	logger := log.FromContext(ctx)
 	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("PB-AWS-#0001: Failed to load AWS configuration -- %w", err)
 	}
 	zoneID, err := utils.RetrieveValueFromEnvOrFile(kAWSZoneID)
 	if err != nil {
-		return nil, fmt.Errorf("PB#0100: Zone ID not found -- %w", err)
+		return nil, fmt.Errorf("PB-AWS-#0002: Zone ID not found -- %w", err)
 	}
 
 	logger.Info("[Provider] AWS Configured", "Zone ID", zoneID)
@@ -58,7 +58,10 @@ func (c *r53) Create(ctx context.Context, record *phonebook.DNSRecord) error {
 	}
 
 	_, err := c.ChangeResourceRecordSets(ctx, &inputs)
-	return err
+	if err != nil {
+		return fmt.Errorf("PB-AWS-#0003: Failed to create DNS record -- %w", err)
+	}
+	return nil
 }
 
 func (c *r53) Delete(ctx context.Context, record *phonebook.DNSRecord) error {
@@ -73,7 +76,10 @@ func (c *r53) Delete(ctx context.Context, record *phonebook.DNSRecord) error {
 	}
 
 	_, err := c.ChangeResourceRecordSets(ctx, &inputs)
-	return err
+	if err != nil {
+		return fmt.Errorf("PB-AWS-#0004: Failed to delete DNS record -- %w", err)
+	}
+	return nil
 }
 
 // Convert a DNSRecord to a resourceRecordSet
@@ -132,8 +138,8 @@ func (c *r53) resourceRecordSet(ctx context.Context, record *phonebook.DNSRecord
 			}
 
 		default:
-			// For unsupported types, throw an error
-			log.FromContext(ctx).Error(fmt.Errorf("PB#4005: Unsupported record type"), "Record Type", record.Spec.RecordType)
+			// For unsupported types, log an error
+			log.FromContext(ctx).Error(fmt.Errorf("PB-AWS-#0005: Unsupported record type"), "Record Type", record.Spec.RecordType)
 		}
 	}
 
