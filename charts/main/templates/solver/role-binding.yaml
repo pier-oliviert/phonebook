@@ -1,0 +1,22 @@
+{{- if .Values.solver.enabled }}
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: phonebook:cert-manager-domain-solver
+  labels:
+    {{- include "operator.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: phonebook:dns01-solver
+
+{{- with .Values.solver.certManager }}
+subjects:
+  - apiGroup: ""
+    kind: ServiceAccount
+    name: {{ .serviceAccount.name }}
+    namespace: {{ .serviceAccount.namespace }}
+{{- end }}
+
+{{- end }}

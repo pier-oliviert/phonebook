@@ -59,9 +59,9 @@ spec:
   issuerRef:
     name: phonebook-solver-ca
   dnsNames:
-  - phonebook-solver
-  - phonebook-solver.{{ .Release.Namespace}}
-  - phonebook-solver.{{ .Release.Namespace }}.svc
-  - phonebook-solver.{{ .Release.Namespace }}.svc.cluster.local
+  - solver
+  - solver.{{ .Release.Namespace}}
+  - solver.{{ .Release.Namespace }}.svc
+  - solver.{{ .Release.Namespace }}.svc.cluster.local
 
 {{- end }}

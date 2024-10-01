@@ -182,7 +182,8 @@ func main() {
 
 	if enableSolver {
 		errGroup.Go(func() error {
-			slvr := solver.NewSolver(env.GetString("PHONEBOOK_SOLVER", "phonebook-solver"), mgr.GetClient())
+			logger.Info("Starting solver")
+			slvr := solver.NewSolver(env.GetString("PHONEBOOK_SOLVER", "solver"), mgr.GetClient())
 			return slvr.Run(ctx)
 		})
 	}

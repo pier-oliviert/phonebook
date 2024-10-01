@@ -67,7 +67,7 @@ func Serve(ctx context.Context, slvr *Solver) error {
 	config := &apiserver.Config{
 		GenericConfig: serverConfig,
 		ExtraConfig: apiserver.ExtraConfig{
-			SolverGroup: fmt.Sprintf("phonebook.%s", slvr.Group()),
+			SolverGroup: slvr.Group(),
 			Solvers:     []webhook.Solver{slvr},
 		},
 	}

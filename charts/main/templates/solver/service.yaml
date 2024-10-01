@@ -3,7 +3,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: phonebook-solver
+  name: solver
   namespace: {{ .Release.Namespace }}
   labels:
     se.quencer.io/solver: phonebook-solver

@@ -45,7 +45,7 @@ type Solver struct {
 func NewSolver(name string, c client.Client) *Solver {
 	return &Solver{
 		name:   name,
-		group:  phonebook.GroupVersion.Group,
+		group:  fmt.Sprintf("phonebook.%s", phonebook.GroupVersion.Group),
 		Client: c,
 	}
 }

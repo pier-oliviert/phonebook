@@ -8,13 +8,13 @@ metadata:
     se.quencer.io/solver: phonebook-solver
     {{- include "operator.labels" . | nindent 4 }}
   annotations:
-    cert-manager.io/inject-ca-from: "{{ .Release.Namespace }}/phonebook-solver-ca"
+    cert-manager.io/inject-ca-from: "{{ .Release.Namespace }}/phonebook-solver"
 spec:
   group: phonebook.se.quencer.io
   groupPriorityMinimum: 1000
   versionPriority: 15
   service:
-    name: phonebook-solver
+    name: solver
     namespace: {{ .Release.Namespace }}
   version: v1alpha1
 
