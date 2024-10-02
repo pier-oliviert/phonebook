@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/aws/aws-sdk-go-v2/service/route53/types"
 	phonebook "github.com/pier-oliviert/phonebook/api/v1alpha1"
 )
 
@@ -70,5 +71,32 @@ func TestAliastTargetProperty(t *testing.T) {
 
 	if *set.AliasTarget.HostedZoneId != record.Spec.Properties[AliasTarget] {
 		t.Error("Expected alias hosted zone id to be set to the alias target property", "Properties", record.Spec.Properties)
+	}
+}
+
+func TestTXTRecord(t *testing.T) {
+	record := phonebook.DNSRecord{
+		Spec: phonebook.DNSRecordSpec{
+			RecordType: string(types.RRTypeTxt),
+			Zone:       "mydomain.com",
+			Name:       "subdomain",
+			Targets:    []string{"some-values"},
+		},
+	}
+
+	c := &r53{
+		zoneID: "MyZone123",
+	}
+
+	set := c.resourceRecordSet(context.TODO(), &record)
+
+	if len(set.ResourceRecords) != 1 {
+		t.Error("Expected resourceRecordSet to return a single record for this test")
+	}
+
+	result := set.ResourceRecords[0]
+
+	if *result.Value != "\"some-values\"" {
+		t.Error("Expected value to return the same value set with extra quotes, got: ", result.Value)
 	}
 }
