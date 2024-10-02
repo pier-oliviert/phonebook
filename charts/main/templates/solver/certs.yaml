@@ -1,0 +1,67 @@
+{{- if .Values.solver.enabled }}
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: phonebook-solver-selfsign
+  namespace: {{ .Release.Namespace }}
+  labels:
+    se.quencer.io/solver: phonebook-solver
+    {{- include "operator.labels" . | nindent 4 }}
+spec:
+  selfSigned: {}
+
+---
+
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: phonebook-solver-ca
+  namespace: {{ .Release.Namespace }}
+  labels:
+    se.quencer.io/solver: phonebook-solver
+    {{- include "operator.labels" . | nindent 4 }}
+spec:
+  secretName: phonebook-solver-ca
+  duration: 43800h # 5y
+  issuerRef:
+    name: phonebook-solver-selfsign 
+  commonName: "ca.phonebook.se.quencer.io"
+  isCA: true
+
+---
+
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: phonebook-solver-ca
+  namespace: {{ .Release.Namespace}}
+  labels:
+    se.quencer.io/solver: phonebook-solver
+    {{- include "operator.labels" . | nindent 4 }}
+spec:
+  ca:
+    secretName: phonebook-solver-ca
+
+---
+
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: phonebook-solver
+  namespace: {{ .Release.Namespace }}
+  labels:
+    se.quencer.io/solver: phonebook-solver
+    {{- include "operator.labels" . | nindent 4 }}
+spec:
+  secretName: phonebook-solver
+  duration: 8760h # 1y
+  issuerRef:
+    name: phonebook-solver-ca
+  dnsNames:
+  - solver
+  - solver.{{ .Release.Namespace}}
+  - solver.{{ .Release.Namespace }}.svc
+  - solver.{{ .Release.Namespace }}.svc.cluster.local
+
+{{- end }}

@@ -1,0 +1,17 @@
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: phonebook-acme-issuer
+spec:
+  acme:
+    email: "youremail@exmaple.com"
+    server: "https://acme-v02.api.letsencrypt.org/directory"
+    privateKeySecretRef:
+      name: acme-issuer
+    solvers:
+      - dns01:
+          webhook:
+            groupName: phonebook.se.quencer.io
+            solverName: solver
+

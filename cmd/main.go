@@ -17,19 +17,23 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"crypto/tls"
 	"flag"
 	"os"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
+	"golang.org/x/sync/errgroup"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
+	"k8s.io/utils/env"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/filters"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
@@ -37,13 +41,13 @@ import (
 
 	sequenceriov1alpha1 "github.com/pier-oliviert/phonebook/api/v1alpha1"
 	"github.com/pier-oliviert/phonebook/internal/controller"
+	"github.com/pier-oliviert/phonebook/internal/solver"
 	"github.com/pier-oliviert/phonebook/pkg/provider"
 	// +kubebuilder:scaffold:imports
 )
 
 var (
-	scheme   = runtime.NewScheme()
-	setupLog = ctrl.Log.WithName("setup")
+	scheme = runtime.NewScheme()
 )
 
 func init() {
@@ -59,6 +63,7 @@ func main() {
 	var probeAddr string
 	var secureMetrics bool
 	var enableHTTP2 bool
+	var enableSolver bool
 	var tlsOpts []func(*tls.Config)
 	flag.StringVar(&metricsAddr, "metrics-bind-address", "0", "The address the metrics endpoint binds to. "+
 		"Use :8443 for HTTPS or :8080 for HTTP, or leave as 0 to disable the metrics service.")
@@ -70,6 +75,9 @@ func main() {
 		"If set, the metrics endpoint is served securely via HTTPS. Use --metrics-secure=false to use HTTP instead.")
 	flag.BoolVar(&enableHTTP2, "enable-http2", false,
 		"If set, HTTP/2 will be enabled for the metrics and webhook servers")
+	flag.BoolVar(&enableSolver, "solver", false,
+		"Enable cert-manager solver for DNS-01 Challenges.")
+
 	opts := zap.Options{
 		Development: true,
 	}
@@ -77,6 +85,7 @@ func main() {
 	flag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
+	logger := log.FromContext(context.Background())
 
 	// if the enable-http2 flag is false (the default), http/2 should be disabled
 	// due to its vulnerabilities. More specifically, disabling http/2 will
@@ -85,7 +94,7 @@ func main() {
 	// - https://github.com/advisories/GHSA-qppj-fm5r-hxr3
 	// - https://github.com/advisories/GHSA-4374-p667-p6c8
 	disableHTTP2 := func(c *tls.Config) {
-		setupLog.Info("disabling http/2")
+		logger.Info("disabling http/2")
 		c.NextProtos = []string{"http/1.1"}
 	}
 
@@ -141,7 +150,7 @@ func main() {
 		// LeaderElectionReleaseOnCancel: true,
 	})
 	if err != nil {
-		setupLog.Error(err, "unable to start manager")
+		logger.Error(err, "unable to start manager")
 		os.Exit(1)
 	}
 
@@ -151,23 +160,36 @@ func main() {
 		Scheme:        mgr.GetScheme(),
 		EventRecorder: mgr.GetEventRecorderFor("dnsrecord"),
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "DNSRecord")
+		logger.Error(err, "unable to create controller", "controller", "DNSRecord")
 		os.Exit(1)
 	}
 	// +kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
-		setupLog.Error(err, "unable to set up health check")
+		logger.Error(err, "unable to set up health check")
 		os.Exit(1)
 	}
 	if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
-		setupLog.Error(err, "unable to set up ready check")
+		logger.Error(err, "unable to set up ready check")
 		os.Exit(1)
 	}
 
-	setupLog.Info("starting manager")
-	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
-		setupLog.Error(err, "problem running manager")
+	errGroup, ctx := errgroup.WithContext(context.Background())
+	errGroup.Go(func() error {
+		logger.Info("starting manager")
+		return mgr.Start(ctrl.SetupSignalHandler())
+	})
+
+	if enableSolver {
+		errGroup.Go(func() error {
+			logger.Info("Starting solver")
+			slvr := solver.NewSolver(env.GetString("PHONEBOOK_SOLVER", "solver"), mgr.GetClient())
+			return slvr.Run(ctx)
+		})
+	}
+
+	if err := errGroup.Wait(); err != nil {
+		logger.Error(err, "could not start controller")
 		os.Exit(1)
 	}
 }

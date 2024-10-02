@@ -1,0 +1,21 @@
+{{- if .Values.solver.enabled }}
+
+apiVersion: apiregistration.k8s.io/v1
+kind: APIService
+metadata:
+  name: v1alpha1.phonebook.se.quencer.io
+  labels:
+    se.quencer.io/solver: phonebook-solver
+    {{- include "operator.labels" . | nindent 4 }}
+  annotations:
+    cert-manager.io/inject-ca-from: "{{ .Release.Namespace }}/phonebook-solver"
+spec:
+  group: phonebook.se.quencer.io
+  groupPriorityMinimum: 1000
+  versionPriority: 15
+  service:
+    name: solver
+    namespace: {{ .Release.Namespace }}
+  version: v1alpha1
+
+{{- end }}

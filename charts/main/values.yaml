@@ -1,2 +1,11 @@
+solver:
+  enabled: false
+  certManager:
+    serviceAccount:
+      name: cert-manager
+      namespace: cert-manager
+  privateKeySecretRef:
+    name: phonebook-solver
+
 controller:
   image: "ghcr.io/pier-oliviert/phonebook:v0.2"

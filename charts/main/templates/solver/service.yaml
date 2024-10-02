@@ -1,0 +1,21 @@
+{{- if .Values.solver.enabled }}
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: solver
+  namespace: {{ .Release.Namespace }}
+  labels:
+    se.quencer.io/solver: phonebook-solver
+    {{- include "operator.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: 443
+      targetPort: 4443
+      protocol: TCP
+      name: https
+  selector:
+    se.quencer.io/solver: phonebook-solver
+
+{{- end }}
