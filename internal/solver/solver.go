@@ -136,7 +136,7 @@ func (s *Solver) CleanUp(ch *whapi.ChallengeRequest) error {
 
 	label, err := labels.Parse(fmt.Sprintf("%s=%s", kChallengeLabel, kChallengeKey))
 	if err != nil {
-		return fmt.Errorf("PB#0004: failed to parse the label selector -- %w", err)
+		return fmt.Errorf("PB-SLV-#0003: failed to parse the label selector -- %w", err)
 	}
 
 	opts := client.ListOptions{

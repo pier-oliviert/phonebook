@@ -52,16 +52,16 @@ func Serve(ctx context.Context, slvr *Solver) error {
 	}
 
 	if err := opts.SecureServing.MaybeDefaultWithSelfSignedCerts("localhost", nil, []net.IP{net.ParseIP("127.0.0.1")}); err != nil {
-		return fmt.Errorf("error creating self-signed certificates: %v", err)
+		return fmt.Errorf("PB-SLV-#0002: error creating self-signed certificates: %v", err)
 	}
 
 	serverConfig := genericapiserver.NewRecommendedConfig(apiserver.Codecs)
 	if err := opts.ApplyTo(serverConfig); err != nil {
-		return err
+		return fmt.Errorf("PB-SLV-#0002: %w", err)
 	}
 
 	if errs := opts.Validate(); len(errs) > 0 {
-		return fmt.Errorf("error validating recommended options: %v", errs)
+		return fmt.Errorf("PB-SLV-#0002: error validating recommended options: %v", errs)
 	}
 
 	config := &apiserver.Config{
