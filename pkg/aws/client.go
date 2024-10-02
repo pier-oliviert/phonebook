@@ -10,6 +10,13 @@ import (
 	phonebook "github.com/pier-oliviert/phonebook/api/v1alpha1"
 	utils "github.com/pier-oliviert/phonebook/pkg/utils"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+
+	// Since the Azure provider already uses this package, it
+	// makes sense to reuse it here too. This is only a convenience
+	// package for converting values to pointer. Other package exists with
+	// a similar functionality, but I rather reuse packages to keep the
+	// depedency tree smaller
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 )
 
 const (
@@ -119,11 +126,19 @@ func (c *r53) resourceRecordSet(ctx context.Context, record *phonebook.DNSRecord
 	} else {
 		// Handle different record types
 		switch types.RRType(record.Spec.RecordType) {
-		case types.RRTypeA, types.RRTypeAaaa, types.RRTypeCname, types.RRTypeTxt:
+		case types.RRTypeA, types.RRTypeAaaa, types.RRTypeCname:
 			set.ResourceRecords = make([]types.ResourceRecord, len(record.Spec.Targets))
 			for i, target := range record.Spec.Targets {
 				set.ResourceRecords[i] = types.ResourceRecord{Value: &target}
 			}
+		case types.RRTypeTxt:
+			set.ResourceRecords = make([]types.ResourceRecord, len(record.Spec.Targets))
+			for i, target := range record.Spec.Targets {
+				// AWS TXT Records requires value to be "quoted". For this reason, the Sprintf() method
+				// is called before wrapping the returned value in a pointer for ResourceRecord.
+				set.ResourceRecords[i] = types.ResourceRecord{Value: to.Ptr(fmt.Sprintf("\"%s\"", target))}
+			}
+
 		case types.RRTypeMx:
 			set.ResourceRecords = make([]types.ResourceRecord, len(record.Spec.Targets))
 			for i, target := range record.Spec.Targets {
