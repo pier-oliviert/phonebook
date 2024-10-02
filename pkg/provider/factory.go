@@ -7,6 +7,7 @@ import (
 	aws "github.com/pier-oliviert/phonebook/pkg/aws"
 	"github.com/pier-oliviert/phonebook/pkg/azure"
 	"github.com/pier-oliviert/phonebook/pkg/cloudflare"
+	"github.com/pier-oliviert/phonebook/pkg/rfc2136"
 	utils "github.com/pier-oliviert/phonebook/pkg/utils"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
@@ -24,6 +25,8 @@ func NewProvider(ctx context.Context, name string) (Provider, error) {
 		return cloudflare.NewClient(ctx)
 	case "azure":
 		return azure.NewClient(ctx)
+	case "rfc2136":
+		return rfc2136.NewClient(ctx)
 	case "":
 		return nil, fmt.Errorf("PB#0001: The environment variable %s need to be set with a valid provider name", kPhonebookProvider)
 	}
