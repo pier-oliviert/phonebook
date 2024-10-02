@@ -16,6 +16,13 @@ This is a list of all errors that are coded (PB#_NUM_: ...) in Phonebook. The li
 |PB#0003|**Provider could not delete the DNS record**||
 |PB#0100|**Provider missing information**|Phonebook failed to initialized a client for the specified provider, more information can be found in the error message and in the provider's [section]({{< ref "/providers" >}}).|
 
+# DNS-01 Solver Specific Error Codes
+|Number|Title|Description|
+|:----|-|-|
+|PB-SLV-#0001|A Challenge DNS Record with type TXT had more than one key associated, this is most likely a bug. File an [issue](https://github.com/pier-oliviert/phonebook/issues/new).|
+|PB-SLV-#0002|The server accepting challenges could not start due to an error, this is most likely a bug. File an [issue](https://github.com/pier-oliviert/phonebook/issues/new).|
+|PB-SLV-#0003|**Could not parse the label selector**|This is an internal error, if it happens to you, please file an [issue](https://github.com/pier-oliviert/phonebook/issues/new).|
+
 # Provider Specific Error Codes
 
 ## Azure

@@ -34,6 +34,7 @@ spec:
 - Support all DNS Record Types (A, AAAA, TXT, CNAME, etc.)
 - Support cloud provider specific properties 
 - Proper error handling per DNS Record
+- Generate wildcard SSL Certificate with Cert-Manager (Let's Encrypt)
 - Allows specifying TTL
 - Allows multiple targets on providers with multi support (Azure, AWS)
 
@@ -46,3 +47,7 @@ spec:
 Phonebook is built to be cloud agnostic with the goal to support as many cloud providers as [external-dns](https://github.com/kubernetes-sigs/external-dns). Obviously, the list is long and each integration requires efforts to support. If you'd like to have support for your provider, please create an [issue](https://github.com/pier-oliviert/phonebook/issues/new)!
 
 The [provider]({{< ref "/providers" >}}) section offers documentation for each of the supported provider.
+
+## SSL Certificates
+
+Any domain managed by Phonebook can be used to generate SSL Certificates using Cert-Manager with Let's Encrypt. Phonebook comes with a [DNS-01 Solver](https://cert-manager.io/docs/configuration/acme/dns01/webhook/) for Cert-Manager which means you can dynamically create SSL Certificates (wildcard included!). Learn how to set up cert-manager with Phonebook [here]({{< ref "/dns-01" >}}).
