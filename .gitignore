@@ -28,3 +28,6 @@ go.work
 
 # OS X
 .DS_Store
+
+# Excluding folder containing test value configuration
+testValues
