@@ -137,7 +137,7 @@ func (c *rfc2136DNS) Create(ctx context.Context, record *phonebook.DNSRecord) er
 			// Re-fetch the latest version of the record
 			err = c.reloadDNSRecord(ctx, record)
 			if err != nil {
-				return fmt.Errorf("failed to reload DNS record after conflict: %w", err)
+				return fmt.Errorf("PB-RFC2136-#0008: Failed to reload DNS record after conflict: %w", err)
 			}
 
 			continue // Retry the operation
@@ -148,21 +148,9 @@ func (c *rfc2136DNS) Create(ctx context.Context, record *phonebook.DNSRecord) er
 	}
 
 	// If retries exhausted, return error
-	return fmt.Errorf("failed to create DNS record after %d retries due to conflict", retryCount)
+	return fmt.Errorf("PB-RFC2136-#0009: Failed to create DNS record after %d retries due to conflict", retryCount)
 }
 
-// Helper function to reload the DNS record
-func (c *rfc2136DNS) reloadDNSRecord(ctx context.Context, record *phonebook.DNSRecord) error {
-	logger := log.FromContext(ctx)
-
-	// Re-fetch the latest version of the DNS record using the Kubernetes client
-	if err := c.client.Get(ctx, client.ObjectKey{Name: record.Name, Namespace: record.Namespace}, record); err != nil {
-		logger.Error(err, "Failed to reload DNS record")
-		return err
-	}
-
-	return nil
-}
 
 // createDNSRecord is the function that performs the actual DNS record creation
 func (c *rfc2136DNS) createDNSRecord(ctx context.Context, record *phonebook.DNSRecord, zoneName string) error {
