@@ -37,3 +37,35 @@ func (c *rfc2136DNS) performSecureUpdate(record *phonebook.DNSRecord, zoneName s
 
 	return nil
 }
+
+
+// implement a delete function
+func (c *rfc2136DNS) performSecureDelete(record *phonebook.DNSRecord, zoneName string) error {
+	// Prepare the DNS message for the delete operation
+	msg := new(dns.Msg)
+	msg.SetUpdate(zoneName)
+
+	// Create the DNS RR (resource record) for the A record with TTL 0
+	rr, err := dns.NewRR(fmt.Sprintf("%s %d IN A %s", record.Spec.Name, 0, record.Spec.Targets[0]))
+	if err != nil {
+		return fmt.Errorf("PB-RFC2136-#0010: Failed to create DNS RR: %w", err)
+	}
+
+	// Add the new record
+	msg.Insert([]dns.RR{rr})
+
+	// Add TSIG for secure updates
+	msg.SetTsig(c.keyname+".", c.secretAlg, 300, time.Now().Unix())
+
+	// Send the update to the RFC2136 server
+	client := new(dns.Client)
+	client.TsigSecret = map[string]string{c.keyname + ".": c.secret}
+
+	serverAddr := fmt.Sprintf("%s:%d", c.server, c.port)
+	_, _, err = client.Exchange(msg, serverAddr)
+	if err != nil {
+		return fmt.Errorf("PB-RFC2136-#0011: Secure DNS delete failed: %w", err)
+	}
+
+	return nil
+}

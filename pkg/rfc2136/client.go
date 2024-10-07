@@ -169,5 +169,13 @@ func (c *rfc2136DNS) createDNSRecord(ctx context.Context, record *phonebook.DNSR
 
 // Placeholder for delete function
 func (c *rfc2136DNS) Delete(ctx context.Context, record *phonebook.DNSRecord) error {
-	return nil
+	logger := log.FromContext(ctx)
+
+	if c.insecure {
+		logger.Info("Performing insecure DNS delete", "Record", record.Spec.Name)
+		return c.performInsecureDelete(record, c.zoneName)
+	}
+
+	logger.Info("Performing secure DNS delete", "Record", record.Spec.Name)
+	return c.performSecureDelete(record, c.zoneName)
 }
