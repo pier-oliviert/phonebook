@@ -25,12 +25,11 @@ func (c *rfc2136DNS) performSecureUpdate(record *phonebook.DNSRecord, zoneName s
 	// Add TSIG for secure updates
 	msg.SetTsig(c.keyname+".", c.secretAlg, 300, time.Now().Unix())
 
-	// Send the update to the RFC2136 server
-	client := new(dns.Client)
-	client.TsigSecret = map[string]string{c.keyname + ".": c.secret}
+	// Set TSIG secret
+    c.dnsClient.SetTsigSecret(map[string]string{c.keyname + ".": c.secret})
 
 	serverAddr := fmt.Sprintf("%s:%d", c.server, c.port)
-	_, _, err = client.Exchange(msg, serverAddr)
+	_, _, err = c.dnsClient.Exchange(msg, serverAddr)
 	if err != nil {
 		return fmt.Errorf("PB-RFC2136-#0009: Secure DNS update failed: %w", err)
 	}
@@ -57,12 +56,12 @@ func (c *rfc2136DNS) performSecureDelete(record *phonebook.DNSRecord, zoneName s
 	// Add TSIG for secure updates
 	msg.SetTsig(c.keyname+".", c.secretAlg, 300, time.Now().Unix())
 
+	// Set TSIG secret
+    c.dnsClient.SetTsigSecret(map[string]string{c.keyname + ".": c.secret})
+	
 	// Send the update to the RFC2136 server
-	client := new(dns.Client)
-	client.TsigSecret = map[string]string{c.keyname + ".": c.secret}
-
 	serverAddr := fmt.Sprintf("%s:%d", c.server, c.port)
-	_, _, err = client.Exchange(msg, serverAddr)
+	_, _, err = c.dnsClient.Exchange(msg, serverAddr)
 	if err != nil {
 		return fmt.Errorf("PB-RFC2136-#0011: Secure DNS delete failed: %w", err)
 	}

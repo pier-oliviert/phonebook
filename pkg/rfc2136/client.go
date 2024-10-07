@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/miekg/dns"
 	phonebook "github.com/pier-oliviert/phonebook/api/v1alpha1"
 	utils "github.com/pier-oliviert/phonebook/pkg/utils"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
@@ -35,6 +36,21 @@ type rfc2136DNS struct {
 	insecure   bool
 	defaultTTL int64
 	client     client.Client
+	dnsClient  DNSClient
+}
+
+type DNSClient interface {
+	Exchange(msg *dns.Msg, addr string) (*dns.Msg, time.Duration, error)
+	SetTsigSecret(secret map[string]string)
+}
+
+// Wrapper for the real dns.Client
+type dnsClientWrapper struct {
+    *dns.Client
+}
+
+func (w *dnsClientWrapper) SetTsigSecret(secret map[string]string) {
+    w.TsigSecret = secret
 }
 
 // NewClient initializes an RFC2136 DNS client
@@ -65,6 +81,9 @@ func NewClient(ctx context.Context) (*rfc2136DNS, error) {
 		return nil, fmt.Errorf("PB-RFC2136-#0004: RFC2136 Insecure not found -- %w", err)
 	}
 
+	// Create a new dns.Client instance
+	dnsClient := &dnsClientWrapper{&dns.Client{}}
+
 	// if insecure is set, we can ignore the keyname and secret values
 	// Using insecure mode is not recommended so we will log a warning just in case it's an accident
 	if insecure == "true" {
@@ -76,6 +95,7 @@ func NewClient(ctx context.Context) (*rfc2136DNS, error) {
 			zoneName:   zoneName,
 			insecure:   true,
 			defaultTTL: defaultTTL,
+			dnsClient: dnsClient,
 		}, nil
 	}
 
@@ -105,6 +125,7 @@ func NewClient(ctx context.Context) (*rfc2136DNS, error) {
 		secretAlg:  secretAlg,
 		insecure:   false,
 		defaultTTL: defaultTTL,
+		dnsClient: dnsClient,
 	}, nil
 }
 
@@ -152,7 +173,7 @@ func (c *rfc2136DNS) Create(ctx context.Context, record *phonebook.DNSRecord) er
 }
 
 
-// createDNSRecord is the function that performs the actual DNS record creation
+// createDNSRecord is the function that performs the actual DNS record creation, done this way to allow for retries in our Create function
 func (c *rfc2136DNS) createDNSRecord(ctx context.Context, record *phonebook.DNSRecord, zoneName string) error {
 	logger := log.FromContext(ctx)
 
@@ -167,7 +188,7 @@ func (c *rfc2136DNS) createDNSRecord(ctx context.Context, record *phonebook.DNSR
 	return c.performSecureUpdate(record, zoneName)
 }
 
-// Placeholder for delete function
+// Delete function
 func (c *rfc2136DNS) Delete(ctx context.Context, record *phonebook.DNSRecord) error {
 	logger := log.FromContext(ctx)
 
