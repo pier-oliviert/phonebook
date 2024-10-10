@@ -40,7 +40,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	phonebook "github.com/pier-oliviert/phonebook/api/v1alpha1"
-	"github.com/pier-oliviert/phonebook/internal/controller"
+	"github.com/pier-oliviert/phonebook/internal/reconcilers/controller"
 	"github.com/pier-oliviert/phonebook/internal/solver"
 	// +kubebuilder:scaffold:imports
 )
