@@ -10,6 +10,7 @@ import (
 	// to ensure that exec-entrypoint and run can make use of them.
 
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
+	"k8s.io/utils/env"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -70,7 +71,7 @@ func (s *server) Run() error {
 		Scheme:                        scheme,
 		HealthProbeBindAddress:        ":8081",
 		LeaderElection:                true,
-		LeaderElectionID:              fmt.Sprintf("%s-provider.phonebook.se.quencer.io", "test"),
+		LeaderElectionID:              fmt.Sprintf("%s-provider.phonebook.se.quencer.io", env.GetString("PB_INTEGRATION", "undefined")),
 		LeaderElectionReleaseOnCancel: true,
 	})
 	if err != nil {

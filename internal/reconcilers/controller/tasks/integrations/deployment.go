@@ -80,6 +80,11 @@ func (t deployment) deployment() *apps.Deployment {
 		Value: t.integration.Spec.Provider.Name,
 	})
 
+	envs = append(envs, core.EnvVar{
+		Name:  "PB_INTEGRATION",
+		Value: t.integration.Name,
+	})
+
 	var replicaCount int32 = 1
 
 	deployment := &apps.Deployment{

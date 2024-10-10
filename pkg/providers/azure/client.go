@@ -88,6 +88,10 @@ func NewClient(ctx context.Context) (*azureDNS, error) {
 	}, nil
 }
 
+func (c *azureDNS) Zones() []string {
+	return nil
+}
+
 // Create DNS record in Azure
 func (c *azureDNS) Create(ctx context.Context, record *phonebook.DNSRecord) error {
 	params, err := c.resourceRecordSet(ctx, record)

@@ -30,7 +30,7 @@ import (
 	"github.com/pier-oliviert/konditionner/pkg/konditions"
 	phonebook "github.com/pier-oliviert/phonebook/api/v1alpha1"
 	"github.com/pier-oliviert/phonebook/api/v1alpha1/integrations"
-	tasks "github.com/pier-oliviert/phonebook/internal/controller/tasks/integrations"
+	tasks "github.com/pier-oliviert/phonebook/internal/reconcilers/controller/tasks/integrations"
 )
 
 // DNSProviderReconciler reconciles a DNSProvider object
