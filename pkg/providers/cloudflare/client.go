@@ -51,6 +51,10 @@ func NewClient(ctx context.Context) (*cf, error) {
 	}, nil
 }
 
+func (c *cf) Zones() []string {
+	return nil
+}
+
 func (c *cf) Create(ctx context.Context, record *phonebook.DNSRecord) error {
 	dnsParams := client.CreateDNSRecordParams{
 		Type:    record.Spec.RecordType,

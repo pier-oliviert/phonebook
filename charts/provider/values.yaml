@@ -1,0 +1,10 @@
+provider: cloudflare
+controller:
+  image: "ghcr.io/pier-oliviert/phonebook-providers:dev"
+  secrets:
+    name: "cloudflare"
+    keys:
+      - name: "CF_API_TOKEN"
+        key: "CF_API_TOKEN"
+      - name: "CF_ZONE_ID"
+        key: "CF_ZONE_ID"

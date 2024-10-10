@@ -53,6 +53,14 @@ func NewClient(ctx context.Context) (*r53, error) {
 	}, nil
 }
 
+func (c *r53) Zones() []string {
+	return nil
+}
+
+func (c *r53) Configure(ctx context.Context) error {
+	return nil
+}
+
 func (c *r53) Create(ctx context.Context, record *phonebook.DNSRecord) error {
 	inputs := route53.ChangeResourceRecordSetsInput{
 		HostedZoneId: &c.zoneID,
@@ -87,6 +95,10 @@ func (c *r53) Delete(ctx context.Context, record *phonebook.DNSRecord) error {
 		return fmt.Errorf("PB-AWS-#0004: Failed to delete DNS record -- %w", err)
 	}
 	return nil
+}
+
+func (c *r53) IntegrationName() string {
+	return "aws"
 }
 
 // Convert a DNSRecord to a resourceRecordSet

@@ -39,10 +39,9 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	sequenceriov1alpha1 "github.com/pier-oliviert/phonebook/api/v1alpha1"
+	phonebook "github.com/pier-oliviert/phonebook/api/v1alpha1"
 	"github.com/pier-oliviert/phonebook/internal/controller"
 	"github.com/pier-oliviert/phonebook/internal/solver"
-	"github.com/pier-oliviert/phonebook/pkg/provider"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -53,7 +52,7 @@ var (
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
-	utilruntime.Must(sequenceriov1alpha1.AddToScheme(scheme))
+	utilruntime.Must(phonebook.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
 }
 
@@ -136,7 +135,7 @@ func main() {
 		WebhookServer:          webhookServer,
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
-		LeaderElectionID:       "dcf9568b.phonebook.se.quencer.io",
+		LeaderElectionID:       "dcf9568b.provider.phonebook.se.quencer.io",
 		// LeaderElectionReleaseOnCancel defines if the leader should step down voluntarily
 		// when the Manager ends. This requires the binary to immediately end when the
 		// Manager is stopped, otherwise, this setting is unsafe. Setting this significantly
@@ -155,12 +154,20 @@ func main() {
 	}
 
 	if err = (&controller.DNSRecordReconciler{
-		Provider:      provider.DefaultProvider(),
 		Client:        mgr.GetClient(),
 		Scheme:        mgr.GetScheme(),
 		EventRecorder: mgr.GetEventRecorderFor("dnsrecord"),
 	}).SetupWithManager(mgr); err != nil {
 		logger.Error(err, "unable to create controller", "controller", "DNSRecord")
+		os.Exit(1)
+	}
+
+	if err = (&controller.DNSIntegrationReconciler{
+		Client:        mgr.GetClient(),
+		Scheme:        mgr.GetScheme(),
+		EventRecorder: mgr.GetEventRecorderFor("dnsintegration"),
+	}).SetupWithManager(mgr); err != nil {
+		logger.Error(err, "unable to create controller", "controller", "DNSIntegration")
 		os.Exit(1)
 	}
 	// +kubebuilder:scaffold:builder

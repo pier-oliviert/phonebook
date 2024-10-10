@@ -25,6 +25,8 @@ const (
 	// The main condition to talk to the provider. Each provider have finer
 	// states that will be reflected as status for this condition.
 	ProviderCondition konditions.ConditionType = "Provider"
+
+	IntegrationCondition konditions.ConditionType = "Integration"
 )
 
 // DNSRecordSpec defines the desired state of DNSRecord and represents
@@ -34,6 +36,12 @@ type DNSRecordSpec struct {
 	// Zone is the the DNS Zone that you want to create a record for.
 	// If you want to create a CNAME called foo.mydomain.com,
 	// "mydomain.com" would be your zone.
+	//
+	// The Zone needs to find a match in one of the DNSProvider configured in your
+	// cluster. Unless the optional `Provider` field is set, Phonebook will look
+	// at all the providers configured to try to find a match for the zone.
+	//
+	// If no provider matches the zone, the record won't be created.
 	Zone string `json:"zone"`
 
 	// RecordType represent the type for the Record you want to create.
@@ -60,6 +68,14 @@ type DNSRecordSpec struct {
 	// If not set, the provider will use its default value (60 seconds).
 	TTL *int64 `json:"ttl,omitempty"`
 
+	// Optional field to be more specific about which Provider you want to use for
+	// this record. This field is useful if you have more than one Provider serving
+	// the same Zone (ie. Split-Horizon DNS).
+	//
+	// In most cases, this field isn't necessary as the Zone field should be enough
+	// to let Phonebook find the proper Provider. This field only gives a hint to Phonebook
+	// and the Zones has to match as well.
+	Integration *string `json:"integration,omitempty"`
 }
 
 // DNSRecordStatus defines the observed state of DNSRecord

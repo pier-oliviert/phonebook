@@ -11,6 +11,7 @@ rules:
   - se.quencer.io
   resources:
   - dnsrecords
+  - dnsintegrations
   verbs:
   - create
   - delete
@@ -23,6 +24,7 @@ rules:
   - se.quencer.io
   resources:
   - dnsrecords/status
+  - dnsintegrations/status
   verbs:
   - get
 

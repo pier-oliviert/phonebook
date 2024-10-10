@@ -19,8 +19,8 @@ package controller
 import (
 	"context"
 	"fmt"
+	"slices"
 
-	core "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
@@ -31,110 +31,102 @@ import (
 
 	"github.com/pier-oliviert/konditionner/pkg/konditions"
 	phonebook "github.com/pier-oliviert/phonebook/api/v1alpha1"
-	"github.com/pier-oliviert/phonebook/pkg/provider"
 )
 
 const kDNSRecordFinalizer string = "phonebook.se.quencer.io/finalizer"
 
 // DNSRecordReconciler reconciles a DNSRecord object
 type DNSRecordReconciler struct {
-	Provider provider.Provider
-
 	client.Client
 	Scheme *runtime.Scheme
 	record.EventRecorder
 }
 
+// DNSRecordReconciler's job is to validate the DNSRecord as well as making sure that
+// the finalizer for the record is in its proper state (present or removed)
+//
 // +kubebuilder:rbac:groups=se.quencer.io,resources=dnsrecords,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=se.quencer.io,resources=dnsrecords/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=se.quencer.io,resources=dnsrecords/finalizers,verbs=update
 func (r *DNSRecordReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	var record phonebook.DNSRecord
-	if err := r.Get(ctx, req.NamespacedName, &record); err != nil {
-		if k8sErrors.IsNotFound(err) {
-			return ctrl.Result{}, nil
-		}
-		return ctrl.Result{}, fmt.Errorf("PB#0002: Couldn't retrieve the DNSRecord (%s) -- %w", req.NamespacedName, err)
+	record, err := r.GetRecord(ctx, req)
+	if k8sErrors.IsNotFound(err) {
+		return ctrl.Result{}, nil
 	}
 
-	condition := record.Status.Conditions.FindOrInitializeFor(phonebook.ProviderCondition)
-	record.Status.Conditions.SetCondition(condition)
-
-	if condition.Status == konditions.ConditionInitialized {
-		err := r.createRecord(ctx, &record)
-		if err != nil {
-		}
-
+	if err != nil {
 		return ctrl.Result{}, err
 	}
 
-	if !record.DeletionTimestamp.IsZero() || condition.Status == konditions.ConditionTerminating {
-		err := r.deleteRecord(ctx, &record)
-		if err != nil {
-			r.Event(&record, core.EventTypeWarning, string(phonebook.ProviderCondition), err.Error())
-		}
-
-		return ctrl.Result{}, err
-	}
-
-	return ctrl.Result{}, r.Status().Update(ctx, &record)
-}
-
-func (r *DNSRecordReconciler) createRecord(ctx context.Context, record *phonebook.DNSRecord) error {
-	logger := log.FromContext(ctx)
-
-	lock := konditions.NewLock(record, r.Client, phonebook.ProviderCondition)
-	return lock.Execute(ctx, func(condition konditions.Condition) error {
-		if controllerutil.AddFinalizer(record, kDNSRecordFinalizer) {
-			if err := r.Update(ctx, record); err != nil {
-				return err
+	log.FromContext(ctx).Info("Reconciling", "Record", record)
+	if !record.DeletionTimestamp.IsZero() {
+		condition := record.Status.Conditions.FindType(phonebook.ProviderCondition)
+		if condition == nil || (condition.Status == konditions.ConditionError || condition.Status == konditions.ConditionTerminated) {
+			if controllerutil.RemoveFinalizer(record, kDNSRecordFinalizer) {
+				return ctrl.Result{Requeue: true}, r.Update(ctx, record)
 			}
 		}
 
-		if err := r.Provider.Create(ctx, record); err != nil {
-			// TODO:Eventually, this should move up the stack to the  main Reconciler method for this struct
-			// as Konditionner should return errors from the Task as expected.
-			logger.Error(err, "DNS Record could not be created", "Zone", record.Spec.Zone, "Subdomain", record.Spec.Name)
-			r.Event(record, core.EventTypeWarning, string(phonebook.ProviderCondition), err.Error())
-
-			return err
-		}
-
-		condition.Status = konditions.ConditionCreated
-		condition.Reason = "DNS Record created according to the spec"
-		record.Conditions().SetCondition(condition)
-
-		return nil
-	})
-}
-
-func (r *DNSRecordReconciler) deleteRecord(ctx context.Context, record *phonebook.DNSRecord) error {
-	logger := log.FromContext(ctx)
-
-	lock := konditions.NewLock(record, r.Client, phonebook.ProviderCondition)
-
-	if lock.Condition().Status == konditions.ConditionTerminated || lock.Condition().Status == konditions.ConditionError {
-		if controllerutil.ContainsFinalizer(record, kDNSRecordFinalizer) {
-			controllerutil.RemoveFinalizer(record, kDNSRecordFinalizer)
-			return r.Update(ctx, record)
-		}
+		return ctrl.Result{}, err
 	}
 
-	return lock.Execute(ctx, func(condition konditions.Condition) error {
+	if controllerutil.AddFinalizer(record, kDNSRecordFinalizer) {
+		log.FromContext(ctx).Info("Finalizer didn't exists")
+		return ctrl.Result{Requeue: true}, r.Update(ctx, record)
+	}
 
-		if err := r.Provider.Delete(ctx, record); err != nil {
-			logger.Error(err, "PB#0003: Could not delete the record upstream")
+	lock := konditions.NewLock(record, r.Client, phonebook.IntegrationCondition)
+	if lock.Condition().Status == konditions.ConditionCompleted {
+		return ctrl.Result{}, nil
+	}
 
-			// The lock is in charge of updating the condition for an error
-			return err
-		}
+	if lock.Condition().Status == konditions.ConditionInitialized {
 
-		condition.Status = konditions.ConditionTerminated
-		condition.Reason = "Record deleted"
-		record.Conditions().SetCondition(condition)
+		lock.Execute(ctx, func(c konditions.Condition) (konditions.Condition, error) {
+			var integrations phonebook.DNSIntegrationList
+			var integration *phonebook.DNSIntegration
 
-		return r.Status().Update(ctx, record)
-	})
+			if err := r.List(ctx, &integrations); err != nil {
+				return c, err
+			}
+
+			for _, i := range integrations.Items {
+				if record.Spec.Integration != nil {
+					if *record.Spec.Integration != i.Name {
+						continue
+					}
+				}
+
+				if slices.Contains(i.Spec.Zones, record.Spec.Zone) {
+					integration = &i
+					goto FOUND_INTEGRATION
+				}
+			}
+
+			goto NO_INTEGRATION
+
+		FOUND_INTEGRATION:
+			c.Status = konditions.ConditionCompleted
+			c.Reason = fmt.Sprintf("Integration found: %s", integration.Name)
+			return c, nil
+
+		NO_INTEGRATION:
+			c.Status = konditions.ConditionError
+			c.Reason = fmt.Sprintf("No Integration matches the zone for this record: %s", record.Spec.Zone)
+			return c, nil
+		})
+	}
+
+	return ctrl.Result{}, nil
+}
+
+func (r *DNSRecordReconciler) GetRecord(ctx context.Context, req ctrl.Request) (*phonebook.DNSRecord, error) {
+	var record phonebook.DNSRecord
+	if err := r.Get(ctx, req.NamespacedName, &record); err != nil {
+		return nil, fmt.Errorf("PB#0002: Couldn't retrieve the resource (%s) -- %w", req.NamespacedName, err)
+	}
+
+	return &record, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
