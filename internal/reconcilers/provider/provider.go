@@ -3,13 +3,13 @@ package provider
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/pier-oliviert/konditionner/pkg/konditions"
 	phonebook "github.com/pier-oliviert/phonebook/api/v1alpha1"
@@ -37,10 +37,15 @@ func (r *ProviderReconciler) Reconcile(ctx context.Context, req ctrl.Request) (r
 	if err != nil {
 		return result, err
 	}
-	log.FromContext(ctx).Info("Reconciling", "Record", record)
 
 	condition := record.Status.Conditions.FindType(phonebook.IntegrationCondition)
 	if condition == nil || condition.Status != konditions.ConditionCompleted {
+		return result, nil
+	}
+
+	if !slices.Contains(r.Store.Provider().Zones(), record.Spec.Zone) {
+		// This Provider doesn't have authority over the zone specified by the
+		// record.
 		return result, nil
 	}
 

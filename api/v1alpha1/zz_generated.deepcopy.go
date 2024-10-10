@@ -93,8 +93,8 @@ func (in *DNSIntegrationSpec) DeepCopyInto(out *DNSIntegrationSpec) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
-	if in.Settings != nil {
-		in, out := &in.Settings, &out.Settings
+	if in.Envs != nil {
+		in, out := &in.Envs, &out.Envs
 		*out = make(map[string]string, len(*in))
 		for key, val := range *in {
 			(*out)[key] = val

@@ -16,7 +16,9 @@ const defaultTTL = int64(60) // Default TTL for DNS records in seconds if not sp
 const kCloudflarePropertiesProxied = "proxied"
 
 type cf struct {
-	zoneID string
+	integration string
+	zoneID      string
+	zones       []string
 
 	client.API
 }
@@ -51,8 +53,15 @@ func NewClient(ctx context.Context) (*cf, error) {
 	}, nil
 }
 
-func (c *cf) Zones() []string {
+func (c *cf) Configure(ctx context.Context, integration string, zones []string) error {
+	c.integration = integration
+	c.zones = zones
+
 	return nil
+}
+
+func (c *cf) Zones() []string {
+	return c.zones
 }
 
 func (c *cf) Create(ctx context.Context, record *phonebook.DNSRecord) error {

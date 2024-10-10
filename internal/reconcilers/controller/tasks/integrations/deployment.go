@@ -3,6 +3,7 @@ package integrations
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/pier-oliviert/konditionner/pkg/konditions"
 	phonebook "github.com/pier-oliviert/phonebook/api/v1alpha1"
@@ -49,11 +50,11 @@ func (t deployment) deployment() *apps.Deployment {
 	if t.integration.Spec.Provider.Image != nil {
 		img = *t.integration.Spec.Provider.Image
 	} else {
-		img = fmt.Sprintf("ghcr.io/pier-oliviert/%s-providers:latest", t.integration.Spec.Provider.Name)
+		img = fmt.Sprintf("ghcr.io/pier-oliviert/providers-%s:latest", t.integration.Spec.Provider.Name)
 	}
 
 	envs := []core.EnvVar{}
-	for name, value := range t.integration.Spec.Settings {
+	for name, value := range t.integration.Spec.Envs {
 		envs = append(envs, core.EnvVar{
 			Name:  name,
 			Value: value,
@@ -75,10 +76,29 @@ func (t deployment) deployment() *apps.Deployment {
 		}
 	}
 
-	envs = append(envs, core.EnvVar{
-		Name:  "PB_PROVIDER",
-		Value: t.integration.Spec.Provider.Name,
-	})
+	envs = append(envs,
+		core.EnvVar{
+			Name:  "PB_INTEGRATION",
+			Value: t.integration.Name,
+		}, core.EnvVar{
+			Name:  "PB_ZONES",
+			Value: strings.Join(t.integration.Spec.Zones, ","),
+		},
+	)
+
+	container := core.Container{
+		Name:  "provider",
+		Env:   envs,
+		Image: img,
+	}
+
+	if len(t.integration.Spec.Provider.Command) != 0 {
+		container.Command = t.integration.Spec.Provider.Command
+	}
+
+	if len(t.integration.Spec.Provider.Args) != 0 {
+		container.Args = t.integration.Spec.Provider.Args
+	}
 
 	var replicaCount int32 = 1
 
@@ -111,12 +131,7 @@ func (t deployment) deployment() *apps.Deployment {
 				},
 				Spec: core.PodSpec{
 					ServiceAccountName: env.GetString("PB_PROVIDER_SERVICE_ACC", "phonebook-providers"),
-					Containers: []core.Container{{
-						Name:  "provider",
-						Env:   envs,
-						Image: img,
-					},
-					},
+					Containers:         []core.Container{container},
 				},
 			},
 		},

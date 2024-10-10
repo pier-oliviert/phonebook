@@ -5,11 +5,13 @@ import (
 	"crypto/tls"
 	"flag"
 	"fmt"
+	"strings"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
+	"k8s.io/utils/env"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -65,16 +67,22 @@ func (s *server) Run() error {
 	}
 
 	tlsOpts = append(tlsOpts, disableHTTP2)
+	integration := env.GetString("PB_INTEGRATION", "")
+	zones := strings.Split(env.GetString("PB_ZONES", ""), ",")
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                        scheme,
 		HealthProbeBindAddress:        ":8081",
 		LeaderElection:                true,
-		LeaderElectionID:              fmt.Sprintf("%s-provider.phonebook.se.quencer.io", "test"),
+		LeaderElectionID:              fmt.Sprintf("%s-provider.phonebook.se.quencer.io", integration),
 		LeaderElectionReleaseOnCancel: true,
 	})
 	if err != nil {
 		return fmt.Errorf("Unable to start manager -- %w", err)
+	}
+
+	if err := s.Provider().Configure(context.Background(), integration, zones); err != nil {
+		return fmt.Errorf("Unable to configure the provider -- %w", err)
 	}
 
 	if err = (&reconcilers.ProviderReconciler{

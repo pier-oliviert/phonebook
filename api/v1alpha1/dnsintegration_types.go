@@ -24,7 +24,9 @@ import (
 
 // A DNSIntegrationSpec represents the bridge between Phonebook's DNSRecord
 // and the cloud provider's client that will be in charge of those Records.
-// A DNSIntegration should be viewed as a superset of a Kubernetes Deployment.
+// When a DNSIntegration is created, it will create a new deployment using a
+// Provider's image. The Deployment will then be in charge of any DNSRecord that
+// matches its Provider and Zone, as specified in the DNSRecord.
 type DNSIntegrationSpec struct {
 	// Provider that backs this DNSIntegration, ie. cloudflare, aws, azure, etc.
 	// This field is used to figure out what Client to initialize and configure.
@@ -42,9 +44,10 @@ type DNSIntegrationSpec struct {
 	// 1. https://en.wikipedia.org/wiki/Split-horizon_DNS
 	Zones []string `json:"zones"`
 
-	// Settings that will be passed over to the Provider. This can
-	// be useful for configurations that aren't secrets.
-	Settings map[string]string `json:"settings,omitempty"`
+	// Envs are passed directly to the Provider as Environment Variables. This can
+	// be useful for configurations that aren't secrets. The keys should use the same
+	// capitalized format you'd expect from an Env Variable.
+	Envs map[string]string `json:"settings,omitempty"`
 
 	// A reference to a Kubernetes Secret that will be passed to the Provider
 	// Phonebook needs to be able to read the Secrets as it will gather the secrets
@@ -54,6 +57,7 @@ type DNSIntegrationSpec struct {
 
 type DNSProviderSpec struct {
 	// Name of the provider as specified in the documentation, ie. cloudflare, aws, azure, etc.
+	// The name has to be a direct match
 	Name string `json:"name"`
 
 	// Image name if you want to use a different image name than the default one used
@@ -62,6 +66,7 @@ type DNSProviderSpec struct {
 	// It will also always use the `latest` tag
 	Image *string `json:"image,omitempty"`
 
+	// Command can be spceifici
 	Command []string `json:"cmd,omitempty"`
 
 	Args []string `json:"args,omitempty"`

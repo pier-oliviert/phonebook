@@ -33,21 +33,65 @@ EXPOSE 4443
 
 ENTRYPOINT ["/controller"]
 
-FROM source AS provider-builder
+## AWS
+FROM source AS aws-builder
 
 COPY api/ api/
 COPY pkg/ pkg/
 COPY internal/ internal/
-COPY cmd/provider/main.go cmd/main.go
+COPY cmd/providers/aws/main.go cmd/main.go
 
 RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH} go build -a -o controller cmd/main.go
 
 
 # Use distroless as minimal base image to package the controller binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
-FROM gcr.io/distroless/static:nonroot AS provider
+FROM gcr.io/distroless/static:nonroot AS aws
 WORKDIR /
-COPY --from=provider-builder /workspace/controller .
+COPY --from=aws-builder /workspace/controller .
+USER 65532:65532
+
+ENTRYPOINT ["/controller"]
+
+
+## Azure
+FROM source AS azure-builder
+
+COPY api/ api/
+COPY pkg/ pkg/
+COPY internal/ internal/
+COPY cmd/providers/azure/main.go cmd/main.go
+
+RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH} go build -a -o controller cmd/main.go
+
+
+# Use distroless as minimal base image to package the controller binary
+# Refer to https://github.com/GoogleContainerTools/distroless for more details
+FROM gcr.io/distroless/static:nonroot AS azure
+WORKDIR /
+COPY --from=azure-builder /workspace/controller .
+USER 65532:65532
+
+ENTRYPOINT ["/controller"]
+
+
+## Cloudflare
+
+FROM source AS cloudflare-builder
+
+COPY api/ api/
+COPY pkg/ pkg/
+COPY internal/ internal/
+COPY cmd/providers/cloudflare/main.go cmd/main.go
+
+RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH} go build -a -o controller cmd/main.go
+
+
+# Use distroless as minimal base image to package the controller binary
+# Refer to https://github.com/GoogleContainerTools/distroless for more details
+FROM gcr.io/distroless/static:nonroot AS cloudflare
+WORKDIR /
+COPY --from=cloudflare-builder /workspace/controller .
 USER 65532:65532
 
 ENTRYPOINT ["/controller"]

@@ -25,6 +25,8 @@ const (
 )
 
 type azureDNS struct {
+	integration      string
+	zones            []string
 	zoneName         string
 	resourceGroup    string
 	recordSetsClient interface {
@@ -86,6 +88,16 @@ func NewClient(ctx context.Context) (*azureDNS, error) {
 		resourceGroup:    resourceGroup,
 		recordSetsClient: dnsClient,
 	}, nil
+}
+
+func (c *azureDNS) Configure(ctx context.Context, integration string, zones []string) error {
+	c.zones = zones
+	c.integration = integration
+	return nil
+}
+
+func (c *azureDNS) Zones() []string {
+	return c.zones
 }
 
 // Create DNS record in Azure

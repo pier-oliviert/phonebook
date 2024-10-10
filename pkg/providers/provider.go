@@ -27,12 +27,14 @@ func (ps *ProviderStore) Provider() Provider {
 }
 
 type Provider interface {
+	Configure(ctx context.Context, integration string, zones []string) error
+
 	// Create a DNS Record
 	Create(context.Context, *phonebook.DNSRecord) error
 
 	// Delete a DNS Record
 	Delete(context.Context, *phonebook.DNSRecord) error
 
-	// Zone it manages
+	// Zones the Provider has authority over
 	Zones() []string
 }

@@ -18,45 +18,20 @@ package main
 
 import (
 	"context"
-	"fmt"
 
-	"github.com/pier-oliviert/phonebook/pkg/provider/server"
-	"github.com/pier-oliviert/phonebook/pkg/providers"
-	"github.com/pier-oliviert/phonebook/pkg/providers/aws"
 	"github.com/pier-oliviert/phonebook/pkg/providers/cloudflare"
-	"github.com/pier-oliviert/phonebook/pkg/utils"
+	"github.com/pier-oliviert/phonebook/pkg/server"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-)
-
-const (
-	PhonebookProvider string = "PB_PROVIDER"
 )
 
 func main() {
 	var err error
 
-	name, err := utils.RetrieveValueFromEnvOrFile(PhonebookProvider)
-	if err != nil {
-		panic(err)
-	}
-
 	ctx := context.Background()
 	logger := log.FromContext(ctx)
-	logger.Info("Initializing provider", "Name", name)
 
-	var p providers.Provider
-
-	switch name {
-	case "aws":
-		p, err = aws.NewClient(ctx)
-	case "cloudflare":
-		p, err = cloudflare.NewClient(ctx)
-	case "":
-		panic(fmt.Errorf("PB#0001: The environment variable %s need to be set with a valid provider name", PhonebookProvider))
-	default:
-		panic(fmt.Errorf("PB#0001: The environment variable %s need to be set with a valid provider name, got %s", PhonebookProvider, name))
-	}
-
+	logger.Info("Initializing Cloudflare Client")
+	p, err := cloudflare.NewClient(ctx)
 	if err != nil {
 		panic(err)
 	}
