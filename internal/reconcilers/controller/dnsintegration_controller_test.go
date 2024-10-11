@@ -30,7 +30,7 @@ import (
 	sequenceriov1alpha1 "github.com/pier-oliviert/phonebook/api/v1alpha1"
 )
 
-var _ = Describe("DNSProvider Controller", func() {
+var _ = Describe("DNSIntegration Controller", func() {
 	Context("When reconciling a resource", func() {
 		const resourceName = "test-resource"
 
@@ -40,18 +40,23 @@ var _ = Describe("DNSProvider Controller", func() {
 			Name:      resourceName,
 			Namespace: "default", // TODO(user):Modify as needed
 		}
-		dnsprovider := &sequenceriov1alpha1.DNSProvider{}
+		dnsprovider := &sequenceriov1alpha1.DNSIntegration{}
 
 		BeforeEach(func() {
-			By("creating the custom resource for the Kind DNSProvider")
+			By("creating the custom resource for the Kind DNSIntegration")
 			err := k8sClient.Get(ctx, typeNamespacedName, dnsprovider)
 			if err != nil && errors.IsNotFound(err) {
-				resource := &sequenceriov1alpha1.DNSProvider{
+				resource := &sequenceriov1alpha1.DNSIntegration{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      resourceName,
 						Namespace: "default",
 					},
-					// TODO(user): Specify other spec details if needed.
+					Spec: sequenceriov1alpha1.DNSIntegrationSpec{
+						Provider: sequenceriov1alpha1.DNSProviderSpec{
+							Name: "cloudflare",
+						},
+						Zones: []string{"mydomain.com"},
+					},
 				}
 				Expect(k8sClient.Create(ctx, resource)).To(Succeed())
 			}
@@ -59,16 +64,16 @@ var _ = Describe("DNSProvider Controller", func() {
 
 		AfterEach(func() {
 			// TODO(user): Cleanup logic after each test, like removing the resource instance.
-			resource := &sequenceriov1alpha1.DNSProvider{}
+			resource := &sequenceriov1alpha1.DNSIntegration{}
 			err := k8sClient.Get(ctx, typeNamespacedName, resource)
 			Expect(err).NotTo(HaveOccurred())
 
-			By("Cleanup the specific resource instance DNSProvider")
+			By("Cleanup the specific resource instance DNSIntegration")
 			Expect(k8sClient.Delete(ctx, resource)).To(Succeed())
 		})
 		It("should successfully reconcile the resource", func() {
 			By("Reconciling the created resource")
-			controllerReconciler := &DNSProviderReconciler{
+			controllerReconciler := &DNSIntegrationReconciler{
 				Client: k8sClient,
 				Scheme: k8sClient.Scheme(),
 			}
