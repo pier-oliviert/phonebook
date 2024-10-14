@@ -9,6 +9,7 @@ import (
 	phonebook "github.com/pier-oliviert/phonebook/api/v1alpha1"
 	"github.com/pier-oliviert/phonebook/api/v1alpha1/integrations"
 	"github.com/pier-oliviert/phonebook/api/v1alpha1/references"
+	"github.com/pier-oliviert/phonebook/pkg/providers"
 	apps "k8s.io/api/apps/v1"
 	core "k8s.io/api/core/v1"
 	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -50,7 +51,7 @@ func (t deployment) deployment() *apps.Deployment {
 	if t.integration.Spec.Provider.Image != nil {
 		img = *t.integration.Spec.Provider.Image
 	} else {
-		img = fmt.Sprintf("ghcr.io/pier-oliviert/providers-%s:latest", t.integration.Spec.Provider.Name)
+		img = providers.ProviderImages[t.integration.Spec.Provider.Name]
 	}
 
 	envs := []core.EnvVar{}
