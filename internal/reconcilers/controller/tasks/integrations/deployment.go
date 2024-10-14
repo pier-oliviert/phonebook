@@ -87,9 +87,10 @@ func (t deployment) deployment() *apps.Deployment {
 	)
 
 	container := core.Container{
-		Name:  "provider",
-		Env:   envs,
-		Image: img,
+		Name:            "provider",
+		Env:             envs,
+		Image:           img,
+		ImagePullPolicy: core.PullIfNotPresent,
 	}
 
 	if len(t.integration.Spec.Provider.Command) != 0 {
