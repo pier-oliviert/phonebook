@@ -149,7 +149,7 @@ func main() {
 		// LeaderElectionReleaseOnCancel: true,
 	})
 	if err != nil {
-		logger.Error(err, "unable to start manager")
+		logger.Error(err, "PB#0004: Unable to start manager")
 		os.Exit(1)
 	}
 
@@ -158,7 +158,7 @@ func main() {
 		Scheme:        mgr.GetScheme(),
 		EventRecorder: mgr.GetEventRecorderFor("dnsrecord"),
 	}).SetupWithManager(mgr); err != nil {
-		logger.Error(err, "unable to create controller", "controller", "DNSRecord")
+		logger.Error(err, "PB#0004: Unable to create controller", "controller", "DNSRecord")
 		os.Exit(1)
 	}
 
@@ -167,17 +167,17 @@ func main() {
 		Scheme:        mgr.GetScheme(),
 		EventRecorder: mgr.GetEventRecorderFor("dnsintegration"),
 	}).SetupWithManager(mgr); err != nil {
-		logger.Error(err, "unable to create controller", "controller", "DNSIntegration")
+		logger.Error(err, "PB#0004: Unable to create controller", "controller", "DNSIntegration")
 		os.Exit(1)
 	}
 	// +kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
-		logger.Error(err, "unable to set up health check")
+		logger.Error(err, "PB#0004: Unable to set up health check")
 		os.Exit(1)
 	}
 	if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
-		logger.Error(err, "unable to set up ready check")
+		logger.Error(err, "PB#0004: Unable to set up ready check")
 		os.Exit(1)
 	}
 
@@ -196,7 +196,7 @@ func main() {
 	}
 
 	if err := errGroup.Wait(); err != nil {
-		logger.Error(err, "could not start controller")
+		logger.Error(err, "PB#0004: Could not start controller")
 		os.Exit(1)
 	}
 }

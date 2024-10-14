@@ -78,11 +78,12 @@ func (s *server) Run() error {
 		LeaderElectionReleaseOnCancel: true,
 	})
 	if err != nil {
-		return fmt.Errorf("Unable to start manager -- %w", err)
+		return fmt.Errorf("PB#0004: Unable to start manager -- %w", err)
 	}
 
 	if err := s.Provider().Configure(context.Background(), integration, zones); err != nil {
-		return fmt.Errorf("Unable to configure the provider -- %w", err)
+		// Error coming from a Provider should already be coded, so returning it as is.
+		return err
 	}
 
 	if err = (&reconcilers.ProviderReconciler{
@@ -91,19 +92,19 @@ func (s *server) Run() error {
 		Scheme:        mgr.GetScheme(),
 		EventRecorder: mgr.GetEventRecorderFor("dnsrecord"),
 	}).SetupWithManager(mgr); err != nil {
-		return fmt.Errorf("Unable to create controller -- %w", err)
+		return fmt.Errorf("PB#0004: Unable to create controller -- %w", err)
 	}
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
-		return fmt.Errorf("Unable to set up health check -- %w", err)
+		return fmt.Errorf("PB#0004: Unable to set up health check -- %w", err)
 	}
 	if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
-		return fmt.Errorf("Unable to set up ready check -- %w", err)
+		return fmt.Errorf("PB#0004: Unable to set up ready check -- %w", err)
 	}
 
 	logger.Info("starting manager")
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
-		return fmt.Errorf("Could not start controller -- %w", err)
+		return fmt.Errorf("PB#0004: Could not start controller -- %w", err)
 	}
 
 	return nil

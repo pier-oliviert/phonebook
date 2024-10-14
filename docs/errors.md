@@ -11,10 +11,9 @@ This is a list of all errors that are coded (PB#_NUM_: ...) in Phonebook. The li
 
 |PB#Number|Title|Description|
 |:----|-|-|
-|PB#0001|**Provider undefined**|Phonebook requires a valid provider to be defined through the `PHONEBOOK_PROVIDER` environment variable. The list of available provider is [available here]({{< ref "/providers" >}}).|
 |PB#0002|**DNS Record not found**||
 |PB#0003|**Provider could not delete the DNS record**||
-|PB#0100|**Provider missing information**|Phonebook failed to initialized a client for the specified provider, more information can be found in the error message and in the provider's [section]({{< ref "/providers" >}}).|
+|PB#0004|Runtime Initialization failure|Phonebook had a failure in its startup sequence. File an [issue](https://github.com/pier-oliviert/phonebook/issues/new).|
 
 # DNS-01 Solver Specific Error Codes
 |Number|Title|Description|
