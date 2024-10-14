@@ -52,16 +52,22 @@ echo "AZURE_CLIENT_SECRET = $SP_APP_PW"
 
 save the output of this in your preferred secure storage. You cannot retrieve the password post creation.
 
-## Example Helm values file
+## Example DNSIntegration records
 
-Replace the keys below, with the output from your service principal creation
+Create a DNSIntegration to start using your Azure zone with Phonebook
 
 ```yaml
-# values.yaml
-provider: azure
-controller:
-  secrets:
-    name: "azure-secrets"
+apiVersion: se.quencer.io/v1alpha1
+kind: DNSIntegration
+metadata:
+  name: azure
+spec:
+  provider:
+    name: azure
+  zones:
+    - mydomain.com
+  secretRef:
+    name: azure-secrets
     keys:
       - name: "AZURE_ZONE_NAME"
         key: "zoneName"
@@ -79,8 +85,15 @@ controller:
 
 If you wish to use environment variables over secrets:
 ```yaml
-provider: azure
-controller:
+apiVersion: se.quencer.io/v1alpha1
+kind: DNSIntegration
+metadata:
+  name: azure
+spec:
+  provider:
+    name: azure
+  zones:
+    - mydomain.com
   env:
     - name: PHONEBOOK_PROVIDER
       value: azure
