@@ -22,16 +22,30 @@ This option is the recommended one if your Kubernetes cluster supports it. Most 
 You should already have an EKS cluster running in your account, with a running node group. The EKS Cluster should also be configured to use **EKS API** as an authentication mode.
 {{< /callout >}}
 
+First, you'll need to add an annotation to the serviceAccount that Phonebook uses to run the Provider's deployment.
+
 ```yaml
-provider: aws
-controller:
-  env:
-    - name: AWS_ZONE_ID
-      value: Z1111111111111
 serviceAccount:
   annotations:
     eks.amazonaws.com/role-arn: arn:aws:iam::1111111111:role/Phonebook-ServiceAccount
 ```
+
+Then, you can create a DNSIntegration that is configured with the `AWS_ZONE_ID`.
+```yaml
+apiVersion: se.quencer.io/v1alpha1
+kind: DNSIntegration
+metadata:
+  name: aws
+spec:
+  provider:
+    name: aws
+  zones:
+    - mydomain.com
+  env:
+    - name: AWS_ZONE_ID
+      value: Z1111111111111
+```
+
 
 #### Configure OIDC (OpenID Connect)
 
@@ -129,11 +143,6 @@ The last piece of the puzzle is to add an annotation to Phonebook's Service acco
 Modify your `values.yaml` to include the Role ARN as an annotations.
 
 ```yaml
-provider: aws
-controller:
-  env:
-    - name: AWS_ZONE_ID
-      value: Z1111111111111
 serviceAccount:
   annotations:
     eks.amazonaws.com/role-arn: arn:aws:iam::1111111111:role/Phonebook-ServiceAccount
@@ -151,16 +160,20 @@ kubectl create secrets generic aws-secret \
   --from-literal=sessionToken=${SESSION_TOKEN} \
 ```
 
-Once created, you can pass the values of the secret to Phonebook's controller.
+Once created, you can create the DNSIntegration that will configure a provider with the secrets you generated.
 
 ```yaml
-provider: aws
-controller:
-  env:
-    - name: AWS_ZONE_ID
-      value: Z1111111111111
-  secrets:
-    name: "aws-secret"
+apiVersion: se.quencer.io/v1alpha1
+kind: DNSIntegration
+metadata:
+  name: aws
+spec:
+  provider:
+    name: aws
+  zones:
+    - mydomain.com
+  secretRef:
+    name: aws-secret
     keys:
       - name: "AWS_ACCESS_KEY_ID"
         key: "accessKeyID"

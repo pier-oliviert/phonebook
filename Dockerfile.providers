@@ -1,0 +1,77 @@
+# Build the controller binary
+FROM golang:1.23 AS source
+ARG TARGETOS
+ARG TARGETARCH
+
+WORKDIR /workspace
+# Copy the Go Modules manifests
+COPY go.mod go.mod
+COPY go.sum go.sum
+
+# cache deps before building and copying source so that we don't need to re-download as much
+# and so that source changes don't invalidate our downloaded layer
+RUN go mod download
+
+
+## AWS
+FROM source AS aws-builder
+
+COPY cmd/providers/aws/main.go cmd/main.go
+
+RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH} go build -a -o controller cmd/main.go
+
+
+# Use distroless as minimal base image to package the controller binary
+# Refer to https://github.com/GoogleContainerTools/distroless for more details
+FROM gcr.io/distroless/static:nonroot AS aws
+WORKDIR /
+COPY --from=aws-builder /workspace/controller .
+USER 65532:65532
+
+ENTRYPOINT ["/controller"]
+
+
+## Azure
+FROM source AS azure-builder
+
+COPY api/ api/
+COPY pkg/ pkg/
+COPY internal/ internal/
+COPY cmd/providers/azure/main.go cmd/main.go
+
+RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH} go build -a -o controller cmd/main.go
+
+
+# Use distroless as minimal base image to package the controller binary
+# Refer to https://github.com/GoogleContainerTools/distroless for more details
+FROM gcr.io/distroless/static:nonroot AS azure
+WORKDIR /
+COPY --from=azure-builder /workspace/controller .
+USER 65532:65532
+
+ENTRYPOINT ["/controller"]
+
+
+## Cloudflare
+
+FROM source AS cloudflare-builder
+
+COPY api/ api/
+COPY pkg/ pkg/
+COPY internal/ internal/
+COPY cmd/providers/cloudflare/main.go cmd/main.go
+
+RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH} go build -a -o controller cmd/main.go
+
+
+# Use distroless as minimal base image to package the controller binary
+# Refer to https://github.com/GoogleContainerTools/distroless for more details
+FROM gcr.io/distroless/static:nonroot AS cloudflare
+WORKDIR /
+COPY --from=cloudflare-builder /workspace/controller .
+USER 65532:65532
+
+ENTRYPOINT ["/controller"]
+
+
+

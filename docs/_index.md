@@ -37,6 +37,8 @@ spec:
 - Generate wildcard SSL Certificate with Cert-Manager (Let's Encrypt)
 - Allows specifying TTL
 - Allows multiple targets on providers with multi support (Azure, AWS)
+- Split-Horizon DNS
+- Support mutiple, concurrent DNS Provider
 
 ## Providers
 
