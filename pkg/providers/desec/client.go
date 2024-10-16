@@ -43,3 +43,40 @@ func NewClient(ctx context.Context) (*deSEC, error) {
 	}, nil
 }
 
+// Create DNS record in deSEC
+func (d *deSEC) CreateDNSRecord(ctx context.Context, zoneName string, recordName string, recordType string, recordValue string, ttl int) error {
+	logger := log.FromContext(ctx)
+
+	// Create a new RRSet
+	rrset := desec.RRSet{
+		Name:  recordName,
+		Type:  recordType,
+		TTL:   ttl,
+		Records: []string{recordValue},
+	}
+
+	// Create the RRSet
+	_, err := d.client.Records.Create(ctx, rrset)
+	if err != nil {
+		return fmt.Errorf("PB-DESEC-#0002: Unable to create record -- %w", err)
+	}
+
+	logger.Info("[Provider] deSEC Record Created")
+
+	return nil
+}
+
+// Delete DNS record in deSEC
+func (d *deSEC) DeleteDNSRecord(ctx context.Context, zoneName string, recordName string, recordType string) error {
+	logger := log.FromContext(ctx)
+
+	// Delete the RRSet
+	err := d.client.Records.Delete(ctx, zoneName, recordName, recordType)
+	if err != nil {
+		return fmt.Errorf("PB-DESEC-#0003: Unable to delete record -- %w", err)
+	}
+
+	logger.Info("[Provider] deSEC Record Deleted")
+
+	return nil
+}
