@@ -40,7 +40,7 @@ type Provider interface {
 }
 
 var ProviderImages = map[string]string{
-	"aws":        "ghcr.io/pier-oliviert/providers-aws:0.3.4",
-	"azure":      "ghcr.io/pier-oliviert/providers-azure:0.3.4",
-	"cloudflare": "ghcr.io/pier-oliviert/providers-cloudflare:0.3.4",
+	"aws":        "ghcr.io/pier-oliviert/providers-aws:v0.3.4",
+	"azure":      "ghcr.io/pier-oliviert/providers-azure:v0.3.4",
+	"cloudflare": "ghcr.io/pier-oliviert/providers-cloudflare:v0.3.4",
 }
