@@ -12,7 +12,7 @@ jobs:
   build-and-push-image:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       packages: write
       attestations: write
       id-token: write
@@ -28,18 +28,50 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
-        with:
-          images: ${{ env.REGISTRY }}/pier-oliviert/phonebook
-
       - name: Controller
         id: push
         uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
         with:
+          file: ${{ github.workspace }}/Dockerfile.controller
           context: .
           target: controller
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: |
+            ${{ env.REGISTRY }}/${{github.repository}}:latest
+            ${{ env.REGISTRY }}/${{github.repository}}:${{github.event.release.tag_name}}
+
+      - name: "Providers: AWS"
+        id: aws
+        uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
+        with:
+          file: ${{ github.workspace }}/Dockerfile.providers
+          context: .
+          target: aws
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/pier-oliviert/providers-aws:latest
+            ${{ env.REGISTRY }}/pier-oliviert/providers-aws:${{github.event.release.tag_name}}
+
+      - name: "Providers: Azure"
+        id: azure
+        uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
+        with:
+          file: ${{ github.workspace }}/Dockerfile.providers
+          context: .
+          target: azure
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/pier-oliviert/providers-azure:latest
+            ${{ env.REGISTRY }}/pier-oliviert/providers-azure:${{github.event.release.tag_name}}
+
+      - name: "Providers: Cloudflare"
+        id: cloudflare
+        uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
+        with:
+          file: ${{ github.workspace }}/Dockerfile.providers
+          context: .
+          target: cloudflare
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/pier-oliviert/providers-cloudflare:latest
+            ${{ env.REGISTRY }}/pier-oliviert/providers-cloudflare:${{github.event.release.tag_name}}

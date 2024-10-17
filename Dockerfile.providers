@@ -16,6 +16,9 @@ RUN go mod download
 ## AWS
 FROM source AS aws-builder
 
+COPY api/ api/
+COPY pkg/ pkg/
+COPY internal/ internal/
 COPY cmd/providers/aws/main.go cmd/main.go
 
 RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH} go build -a -o controller cmd/main.go
