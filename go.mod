@@ -14,10 +14,10 @@ require (
 	github.com/onsi/gomega v1.33.1
 	github.com/pier-oliviert/konditionner v0.2.5
 	github.com/stretchr/testify v1.9.0
+	k8s.io/api v0.31.1
 	k8s.io/apimachinery v0.31.1
 	k8s.io/apiserver v0.31.1
 	k8s.io/client-go v0.31.1
-	k8s.io/kubernetes v1.31.1
 	k8s.io/utils v0.0.0-20240921022957-49e7df575cb6
 	sigs.k8s.io/controller-runtime v0.19.0
 )
@@ -35,7 +35,6 @@ require (
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
 	golang.org/x/crypto v0.27.0 // indirect
-	k8s.io/api v0.31.1 // indirect
 )
 
 require (
