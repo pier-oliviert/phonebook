@@ -107,7 +107,7 @@ RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH} go build -a -o co
 
 FROM gcr.io/distroless/static:nonroot AS desec
 WORKDIR /
-COPY --from=desec-builder /workspace/controller .
+COPY --from=desec-builder /cmd/providers/desec/main.go cmd/main.go
 USER 65532:65532
 
 ENTRYPOINT ["/controller"]
