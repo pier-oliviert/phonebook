@@ -97,3 +97,17 @@ USER 65532:65532
 ENTRYPOINT ["/controller"]
 
 
+FROM source AS desec-builder
+COPY api/ api/
+COPY pkg/ pkg/
+COPY internal/ internal/
+COPY cmd/providers/cloudflare/main.go cmd/main.go
+
+RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH} go build -a -o controller cmd/main.go
+
+FROM gcr.io/distroless/static:nonroot AS desec
+WORKDIR /
+COPY --from=desec-builder /cmd/providers/desec/main.go cmd/main.go
+USER 65532:65532
+
+ENTRYPOINT ["/controller"]

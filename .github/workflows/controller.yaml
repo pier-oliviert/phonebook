@@ -75,3 +75,15 @@ jobs:
           tags: |
             ${{ env.REGISTRY }}/pier-oliviert/providers-cloudflare:latest
             ${{ env.REGISTRY }}/pier-oliviert/providers-cloudflare:${{github.event.release.tag_name}}
+
+      - name: "Providers: deSEC"
+        id: desec
+        uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
+        with:
+          file: ${{ github.workspace }}/Dockerfile.providers
+          context: .
+          target: desec
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/pier-oliviert/providers-desec:latest
+            ${{ env.REGISTRY }}/pier-oliviert/providers-desec:${{github.event.release.tag_name}}
