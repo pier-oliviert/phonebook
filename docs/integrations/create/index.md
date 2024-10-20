@@ -15,7 +15,7 @@ Phonebook's main controller has the responsibility of validating new DNSRecord a
 
 ## A Provider's main function
 
-```go
+```go {filename="main.go"}
 package main
 
 import (
