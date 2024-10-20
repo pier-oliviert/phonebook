@@ -2,6 +2,7 @@
 title: 'Create a provider'
 date: 2024-10-20T10:38:15-04:00
 draft: false
+weight: 100
 ---
 
 The `DNSIntegration` CRD was created to allow anyone to create their own provider and manage DNSRecord using Phonebook. Here you will find all the information to create your own provider.
