@@ -55,11 +55,8 @@ func (t deployment) deployment() *apps.Deployment {
 	}
 
 	envs := []core.EnvVar{}
-	for name, value := range t.integration.Spec.Envs {
-		envs = append(envs, core.EnvVar{
-			Name:  name,
-			Value: value,
-		})
+	if len(t.integration.Spec.Env) != 0 {
+		envs = append(envs, t.integration.Spec.Env...)
 	}
 
 	if t.integration.Spec.SecretRef != nil {

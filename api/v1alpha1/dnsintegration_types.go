@@ -19,6 +19,7 @@ package v1alpha1
 import (
 	"github.com/pier-oliviert/konditionner/pkg/konditions"
 	"github.com/pier-oliviert/phonebook/api/v1alpha1/references"
+	core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -44,14 +45,20 @@ type DNSIntegrationSpec struct {
 	// 1. https://en.wikipedia.org/wiki/Split-horizon_DNS
 	Zones []string `json:"zones"`
 
-	// Envs are passed directly to the Provider as Environment Variables. This can
-	// be useful for configurations that aren't secrets. The keys should use the same
-	// capitalized format you'd expect from an Env Variable.
-	Envs map[string]string `json:"settings,omitempty"`
+	// Env are passed directly to the Provider as Environment Variables for the deployment. This can
+	// be useful for configurations. It uses native env structure as defined in K8s' docs(1).
+	//
+	// It can be useful to source environment variables from config or to set them directly too.
+	// If you want to source environment variable from secrets, you may use `secretRef` instead as
+	// it is simpler to use, but that's up to you.
+	//
+	// 1. https://kubernetes.io/docs/tasks/inject-data-application/define-environment-variable-container/
+	Env []core.EnvVar `json:"env,omitempty"`
 
-	// A reference to a Kubernetes Secret that will be passed to the Provider
-	// Phonebook needs to be able to read the Secrets as it will gather the secrets
-	// and then pass it to the Provider through the Configure() interface method.
+	// A reference to a Kubernetes Secret that will be passed to the Provider. Each keys
+	// defined will be exported as an environment variable to the provider's deployment.
+	// The SecretRef has precedence over the `Env` field so any keys specified here will override
+	// values that would otherwise be defined in the `Env` field.
 	SecretRef *references.SecretRef `json:"secretRef,omitempty"`
 }
 
