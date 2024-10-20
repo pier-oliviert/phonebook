@@ -1,5 +1,5 @@
 ---
-title: "Cert-Manager DNS-01 Challenge for Let's Encrypt"
+title: "SSL Cert with Cert-Manager"
 date: 2024-09-30T20:42:38.603Z
 draft: false
 cascade:

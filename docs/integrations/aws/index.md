@@ -88,7 +88,7 @@ First, create a new Role. For Trusted Entity, select **Custom trust policy**. In
             "Condition": {
                 "StringEquals": {
                     "oidc.eks.us-east-2.amazonaws.com/id/${OIDC_ID}:aud": "sts.amazonaws.com",
-                    "oidc.eks.us-east-2.amazonaws.com/id/${OIDC_ID}:sub": "system:serviceaccount:${PHONEBOOK_NAMESPACE}:phonebook-controller"
+                    "oidc.eks.us-east-2.amazonaws.com/id/${OIDC_ID}:sub": "system:serviceaccount:${PHONEBOOK_NAMESPACE}:phonebook-providers"
                 }
             }
         }
