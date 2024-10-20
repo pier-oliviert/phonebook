@@ -2,6 +2,7 @@
 title: 'Azure'
 date: 2024-09-27T10:38:15-04:00
 draft: false
+weight: 1
 ---
 
 ## Obtaining Access to the Azure DNS Zone via Service Principal

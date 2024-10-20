@@ -2,6 +2,7 @@
 title: 'deSEC'
 date: 2024-09-27T10:38:15-04:00
 draft: false
+weight: 1
 ---
 
 ## Example DNSIntegration records
