@@ -17,8 +17,7 @@ helm repo add phonebook https://pier-oliviert.github.io/phonebook/ --force-updat
 ```sh
 helm upgrade --install phonebook phonebook/phonebook \
   --namespace phonebook-system \
-  --create-namespace \
-  --values values.yaml
+  --create-namespace
 ```
 
 3. **Create a DNSIntegration**
