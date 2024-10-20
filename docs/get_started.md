@@ -23,6 +23,6 @@ helm upgrade --install phonebook phonebook/phonebook \
 
 3. **Create a DNSIntegration**
 
-Phonebook requires some user values about the DNS provider you want to use to successfully run. Refer to the [providers]({{< ref "/providers" >}}) page to learn how to configure your `values.yaml` file.
+Phonebook requires some user values about the DNS provider you want to use to successfully run. Refer to the [integrations]({{< ref "/integrations" >}}) section to learn how to configure your `values.yaml` file.
 
 The DNSIntegration is what configure one of the supported providers
