@@ -22,6 +22,7 @@ package v1alpha1
 
 import (
 	"github.com/pier-oliviert/phonebook/api/v1alpha1/references"
+	"k8s.io/api/core/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -93,11 +94,11 @@ func (in *DNSIntegrationSpec) DeepCopyInto(out *DNSIntegrationSpec) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
-	if in.Envs != nil {
-		in, out := &in.Envs, &out.Envs
-		*out = make(map[string]string, len(*in))
-		for key, val := range *in {
-			(*out)[key] = val
+	if in.Env != nil {
+		in, out := &in.Env, &out.Env
+		*out = make([]v1.EnvVar, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
 	if in.SecretRef != nil {
