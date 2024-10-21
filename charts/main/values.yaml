@@ -8,4 +8,4 @@ solver:
     name: phonebook-solver
 
 controller:
-  image: "ghcr.io/pier-oliviert/phonebook:v0.3.5"
+  image: "ghcr.io/pier-oliviert/phonebook:v0.3.6"
