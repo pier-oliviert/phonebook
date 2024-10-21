@@ -2,6 +2,16 @@ apiVersion: v1
 entries:
   phonebook:
   - apiVersion: v2
+    appVersion: 0.3.6
+    created: "2024-10-21T12:48:58.744095443Z"
+    description: Manages DNS Record within Kubernetes
+    digest: ae79b3711f79c56a9735d1212cc825baeaf98531faa184f9433e5dd136f04ba2
+    name: phonebook
+    type: application
+    urls:
+    - https://github.com/pier-oliviert/phonebook/releases/download/phonebook-0.3.6/phonebook-0.3.6.tgz
+    version: 0.3.6
+  - apiVersion: v2
     appVersion: 0.3.5
     created: "2024-10-19T12:58:49.607787307Z"
     description: Manages DNS Record within Kubernetes
@@ -51,4 +61,4 @@ entries:
     urls:
     - https://github.com/pier-oliviert/phonebook/releases/download/phonebook-0.2/phonebook-0.2.tgz
     version: "0.2"
-generated: "2024-10-19T12:58:49.607811742Z"
+generated: "2024-10-21T12:48:58.744120249Z"
