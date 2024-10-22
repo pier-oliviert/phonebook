@@ -16,11 +16,18 @@ const (
 	DefaultTTL  = int64(120) // gcore doesn't support shorter TTL for the free plan, so 120 is the basis to avoid confusions
 )
 
+// This interface is created so mocks can be done on testing. Since gcore doesn't have any interface to work with,
+// this needs to exists here in order for phonebook to have proper testing
+type api interface {
+	AddZoneRRSet(context.Context, string, string, string, []gdns.ResourceRecord, int, ...gdns.AddZoneOpt) error
+	DeleteRRSet(context.Context, string, string, string) error
+}
+
 type gcore struct {
 	integration string
 	zoneID      string
 	zones       []string
-	api         *gdns.Client
+	api         api
 }
 
 func NewClient(ctx context.Context) (*gcore, error) {
