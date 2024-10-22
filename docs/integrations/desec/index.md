@@ -25,7 +25,7 @@ spec:
     name: desec-secrets
     keys:
       - name: "DESEC_TOKEN"
-        value: 'sometokenfromdesechere'
+        key: 'sometokenfromdesechere'
 ```
 
 If you wish to use environment variables over secrets:
