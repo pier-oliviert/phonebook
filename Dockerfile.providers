@@ -94,3 +94,20 @@ COPY --from=desec-builder /workspace/controller .
 USER 65532:65532
 
 ENTRYPOINT ["/controller"]
+
+## gcore
+FROM source AS gcore-builder
+
+COPY api/ api/
+COPY pkg/ pkg/
+COPY internal/ internal/
+COPY cmd/providers/gcore/main.go cmd/main.go
+
+RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH} go build -a -o controller cmd/main.go
+
+FROM gcr.io/distroless/static:nonroot AS gcore
+WORKDIR /
+COPY --from=gcore-builder /workspace/controller .
+USER 65532:65532
+
+ENTRYPOINT ["/controller"]

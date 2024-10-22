@@ -6,10 +6,12 @@ toolchain go1.23.0
 
 require (
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.14.0
+	github.com/G-Core/gcore-dns-sdk-go v0.2.9
 	github.com/aws/aws-sdk-go-v2/config v1.27.36
 	github.com/aws/aws-sdk-go-v2/service/route53 v1.44.0
 	github.com/cert-manager/cert-manager v1.16.0-beta.0
 	github.com/cloudflare/cloudflare-go v0.104.0
+	github.com/nrdcg/desec v0.8.0
 	github.com/onsi/ginkgo/v2 v2.19.0
 	github.com/onsi/gomega v1.33.1
 	github.com/pier-oliviert/konditionner v0.2.5
@@ -30,7 +32,6 @@ require (
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-retryablehttp v0.7.7 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
-	github.com/nrdcg/desec v0.8.0 // indirect
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
