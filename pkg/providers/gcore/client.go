@@ -3,15 +3,13 @@ package gcore
 import (
 	"context"
 	"fmt"
-	"net/url"
-	"os"
 
 	gdns "github.com/G-Core/gcore-dns-sdk-go"
 	phonebook "github.com/pier-oliviert/phonebook/api/v1alpha1"
+	"github.com/pier-oliviert/phonebook/pkg/utils"
 )
 
 const (
-	EnvAPIURL   = "GCORE_API_URL"
 	EnvAPIToken = "GCORE_API_TOKEN"
 	DefaultTTL  = int64(120) // gcore doesn't support shorter TTL for the free plan, so 120 is the basis to avoid confusions
 )
@@ -33,17 +31,11 @@ type gcore struct {
 func NewClient(ctx context.Context) (*gcore, error) {
 	var err error
 
-	apiURL := os.Getenv(EnvAPIURL)
-
-	token := os.Getenv(EnvAPIToken)
-	api := gdns.NewClient(gdns.PermanentAPIKeyAuth(token))
-
-	if apiURL != "" {
-		api.BaseURL, err = url.Parse(apiURL)
-		if err != nil {
-			return nil, err
-		}
+	token, err := utils.RetrieveValueFromEnvOrFile(EnvAPIToken)
+	if err != nil {
+		return nil, err
 	}
+	api := gdns.NewClient(gdns.PermanentAPIKeyAuth(token))
 
 	return &gcore{
 		api: api,

@@ -3,6 +3,7 @@ package gcore
 import (
 	"context"
 	"fmt"
+	"os"
 	"testing"
 
 	gdns "github.com/G-Core/gcore-dns-sdk-go"
@@ -51,6 +52,7 @@ func (m *MockRecordSetsClient) DeleteRRSet(_ context.Context, zone, name, rType 
 }
 
 func TestNewClient(t *testing.T) {
+	os.Setenv("GCORE_API_TOKEN", "Mytoken")
 	_, err := NewClient(context.Background())
 	if err != nil {
 		t.Error(err)
@@ -58,6 +60,7 @@ func TestNewClient(t *testing.T) {
 }
 
 func TestCreation(t *testing.T) {
+	os.Setenv("GCORE_API_TOKEN", "Mytoken")
 	client, err := NewClient(context.Background())
 	if err != nil {
 		t.Error(err)
@@ -100,6 +103,7 @@ func TestCreation(t *testing.T) {
 }
 
 func TestCreationTTLSet(t *testing.T) {
+	os.Setenv("GCORE_API_TOKEN", "Mytoken")
 	client, err := NewClient(context.Background())
 	if err != nil {
 		t.Error(err)
