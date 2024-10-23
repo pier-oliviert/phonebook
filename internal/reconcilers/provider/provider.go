@@ -56,7 +56,7 @@ func (r *ProviderReconciler) Reconcile(ctx context.Context, req ctrl.Request) (r
 
 	if !record.DeletionTimestamp.IsZero() {
 		err = lock.Execute(ctx, func(c konditions.Condition) (konditions.Condition, error) {
-			if err := r.Store.Provider().Delete(ctx, record); err != nil {
+			if err = r.Store.Provider().Delete(ctx, record); err != nil {
 				return c, err
 			}
 
@@ -68,7 +68,7 @@ func (r *ProviderReconciler) Reconcile(ctx context.Context, req ctrl.Request) (r
 
 	if lock.Condition().Status == konditions.ConditionInitialized {
 		err = lock.Execute(ctx, func(c konditions.Condition) (konditions.Condition, error) {
-			if err := r.Store.Provider().Create(ctx, record); err != nil {
+			if err = r.Store.Provider().Create(ctx, record); err != nil {
 				return c, err
 			}
 			c.Status = konditions.ConditionCreated
@@ -77,7 +77,7 @@ func (r *ProviderReconciler) Reconcile(ctx context.Context, req ctrl.Request) (r
 		})
 	}
 
-	return result, nil
+	return result, err
 }
 
 func (r *ProviderReconciler) SetupWithManager(mgr ctrl.Manager) error {

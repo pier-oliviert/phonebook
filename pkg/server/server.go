@@ -81,7 +81,7 @@ func (s *server) Run() error {
 		return fmt.Errorf("PB#0004: Unable to start manager -- %w", err)
 	}
 
-	if err := s.Provider().Configure(context.Background(), integration, zones); err != nil {
+	if err = s.Provider().Configure(context.Background(), integration, zones); err != nil {
 		// Error coming from a Provider should already be coded, so returning it as is.
 		return err
 	}
