@@ -16,7 +16,6 @@ func (ps *ProviderStore) Store(p Provider) {
 	ps.mu.Lock()
 	defer ps.mu.Unlock()
 	ps.provider = p
-
 }
 
 func (ps *ProviderStore) Provider() Provider {
@@ -40,9 +39,8 @@ type Provider interface {
 }
 
 var ProviderImages = map[string]string{
-
-	"aws":        "ghcr.io/pier-oliviert/providers-aws:v0.3.6",
-	"azure":      "ghcr.io/pier-oliviert/providers-azure:v0.3.6",
-	"cloudflare": "ghcr.io/pier-oliviert/providers-cloudflare:v0.3.6",
-	"desec":      "ghcr.io/pier-oliviert/providers-desec:v0.3.6",
+	"aws":        "ghcr.io/pier-oliviert/providers-aws:v0.3.7",
+	"azure":      "ghcr.io/pier-oliviert/providers-azure:v0.3.7",
+	"cloudflare": "ghcr.io/pier-oliviert/providers-cloudflare:v0.3.7",
+	"desec":      "ghcr.io/pier-oliviert/providers-desec:v0.3.7",
 }
