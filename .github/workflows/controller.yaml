@@ -1,7 +1,7 @@
 name: Create and publish a Docker image
 
 on:
-  release: 
+  release:
     types: [published]
 
 env:
@@ -87,3 +87,15 @@ jobs:
           tags: |
             ${{ env.REGISTRY }}/pier-oliviert/providers-desec:latest
             ${{ env.REGISTRY }}/pier-oliviert/providers-desec:${{github.event.release.tag_name}}
+
+      - name: "Providers: Gcore"
+        id: gcore
+        uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
+        with:
+          file: ${{ github.workspace }}/Dockerfile.providers
+          context: .
+          target: gcore
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/pier-oliviert/providers-gcore:latest
+            ${{ env.REGISTRY }}/pier-oliviert/providers-gcore:${{github.event.release.tag_name}}

@@ -43,4 +43,5 @@ var ProviderImages = map[string]string{
 	"azure":      "ghcr.io/pier-oliviert/providers-azure:v0.3.7",
 	"cloudflare": "ghcr.io/pier-oliviert/providers-cloudflare:v0.3.7",
 	"desec":      "ghcr.io/pier-oliviert/providers-desec:v0.3.7",
+	"gcore":      "ghcr.io/pier-oliviert/providers-gcore:v0.3.7",
 }
