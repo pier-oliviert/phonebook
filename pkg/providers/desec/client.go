@@ -22,7 +22,6 @@ type deSEC struct {
 	zones       []string
 }
 
-
 // NewClient initializes a deSEC DNS client
 func NewClient(ctx context.Context) (*deSEC, error) {
 	logger := log.FromContext(ctx)
@@ -55,7 +54,6 @@ func (d *deSEC) Configure(ctx context.Context, integration string, zones []strin
 func (d *deSEC) Zones() []string {
 	return d.zones
 }
-
 
 // Create DNS record in deSEC
 func (d *deSEC) Create(ctx context.Context, record *phonebook.DNSRecord) error {

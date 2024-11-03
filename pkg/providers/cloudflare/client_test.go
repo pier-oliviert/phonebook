@@ -21,8 +21,9 @@ type mockAPI struct {
 }
 
 type cft struct {
-	zoneID string
-	API    CloudflareAPI
+	integration string
+	zoneID      string
+	API         CloudflareAPI
 }
 
 func (m *mockAPI) CreateDNSRecord(ctx context.Context, zoneID string, params client.CreateDNSRecordParams) (client.DNSRecordResponse, error) {
@@ -54,17 +55,21 @@ func (c *cft) CreateDNSRecord(ctx context.Context, record *phonebook.DNSRecord) 
 
 	// Set the RemoteID in the record's status
 	remoteID := response.Result.ID
-	record.Status.RemoteID = &remoteID
+	record.Status.RemoteInfo = map[string]phonebook.IntegrationInfo{
+		c.integration: {
+			"recordID": remoteID,
+		},
+	}
 
 	return nil
 }
 
 // Add Delete method to cft struct (you'll need to implement this)
 func (c *cft) Delete(ctx context.Context, record *phonebook.DNSRecord) error {
-	if record.Status.RemoteID == nil {
+	if record.Status.RemoteInfo[c.integration] == nil {
 		return nil // Nothing to delete if RemoteID is not set
 	}
-	return c.API.DeleteDNSRecord(ctx, c.zoneID, *record.Status.RemoteID)
+	return c.API.DeleteDNSRecord(ctx, c.zoneID, record.Status.RemoteInfo[c.integration]["recordID"])
 }
 
 // Test for the NewClient function
@@ -127,8 +132,9 @@ func TestDNSCreation(t *testing.T) {
 
 	// Create cf struct with mock API
 	c := cft{
-		zoneID: "Some Zone ID",
-		API:    mockAPI, // Use the mock API here
+		integration: "cloudflare-test",
+		zoneID:      "Some Zone ID",
+		API:         mockAPI, // Use the mock API here
 	}
 
 	// Test DNS record creation
@@ -138,8 +144,8 @@ func TestDNSCreation(t *testing.T) {
 	}
 
 	// Check if RemoteID was set correctly
-	if record.Status.RemoteID == nil || *record.Status.RemoteID != "fake-record-id" {
-		t.Errorf("Expected RemoteID to be 'fake-record-id', but got: %v", record.Status.RemoteID)
+	if record.Status.RemoteInfo[c.integration]["recordID"] == "" || record.Status.RemoteInfo[c.integration]["recordID"] != "fake-record-id" {
+		t.Errorf("Expected RemoteID to be 'fake-record-id', but got: %v", record.Status.RemoteInfo[c.integration]["recordID"])
 	}
 }
 
@@ -148,20 +154,6 @@ func TestDNSDeletion(t *testing.T) {
 	// Mock environment variables
 	os.Setenv("CF_API_TOKEN", "Some Value")
 	os.Setenv("CF_ZONE_ID", "Some Zone ID")
-
-	// Prepare test DNS record
-	recordID := "fake-record-id"
-	record := phonebook.DNSRecord{
-		Spec: phonebook.DNSRecordSpec{
-			Zone:       "mydomain.com",
-			Name:       "subdomain",
-			RecordType: "A",
-			Targets:    []string{"127.0.0.1"},
-		},
-		Status: phonebook.DNSRecordStatus{
-			RemoteID: &recordID,
-		},
-	}
 
 	// Mock the DeleteDNSRecord function
 	mockAPI := &mockAPI{
@@ -176,8 +168,27 @@ func TestDNSDeletion(t *testing.T) {
 
 	// Create cft struct with mock API
 	c := cft{
-		zoneID: "Some Zone ID",
-		API:    mockAPI,
+		integration: "my-test",
+		zoneID:      "Some Zone ID",
+		API:         mockAPI,
+	}
+	//
+	// Prepare test DNS record
+	recordID := "fake-record-id"
+	record := phonebook.DNSRecord{
+		Spec: phonebook.DNSRecordSpec{
+			Zone:       "mydomain.com",
+			Name:       "subdomain",
+			RecordType: "A",
+			Targets:    []string{"127.0.0.1"},
+		},
+		Status: phonebook.DNSRecordStatus{
+			RemoteInfo: map[string]phonebook.IntegrationInfo{
+				c.integration: {
+					"recordID": recordID,
+				},
+			},
+		},
 	}
 
 	// Test DNS record deletion

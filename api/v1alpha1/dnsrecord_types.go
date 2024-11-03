@@ -78,16 +78,32 @@ type DNSRecordSpec struct {
 	Integration *string `json:"integration,omitempty"`
 }
 
+type IntegrationInfo map[string]string
+
 // DNSRecordStatus defines the observed state of DNSRecord
 type DNSRecordStatus struct {
 	// Set of conditions that the DNSRecord will go through during its
 	// lifecycle.
 	Conditions konditions.Conditions `json:"conditions,omitempty"`
 
-	// Name of the provider that was used to create this record.
-	Provider string `json:"provider,omitempty"`
-	// RemoteID is the ID, if available for the record that was created
-	RemoteID *string `json:"remoteID,omitempty"`
+	// RemoteInfo is a field that can be used by DNSIntegration's provider to
+	// store information as the Record is created. Each integration has its own map it can
+	// populate with arbitrary data. Each entries in the root RemoteInfo refers to the name of
+	// the integration that stored the intormation. For instance, if you have a DNSRecord that
+	// is shared between 2 integrations named `cloudflare-dev` and `aws-prod`, RemoteInfo would
+	// look like this:
+	//    map[string]map[string]string{
+	//      "cloudflare-dev": map[string]string{
+	//        // cloudflare related information about the record
+	//      },
+	//      "aws-prod": map[string]string{
+	//        // aws related information about the record
+	//      }
+	//    }
+	//
+	// A DNSIntegration can have multiple entries stored in this field and it's up the integration
+	// to make sure those fields are not stale.
+	RemoteInfo map[string]IntegrationInfo `json:"remoteInfo,omitempty"`
 }
 
 // +kubebuilder:object:root=true

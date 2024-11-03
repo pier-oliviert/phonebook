@@ -10,10 +10,12 @@ import (
 	"github.com/pier-oliviert/phonebook/pkg/utils"
 )
 
-const kCloudflareAPIKeyName = "CF_API_TOKEN"
-const kCloudflareZoneID = "CF_ZONE_ID"
-const defaultTTL = int64(60) // Default TTL for DNS records in seconds if not specified
-const kCloudflarePropertiesProxied = "proxied"
+const (
+	kCloudflareAPIKeyName        = "CF_API_TOKEN"
+	kCloudflareZoneID            = "CF_ZONE_ID"
+	defaultTTL                   = int64(60) // Default TTL for DNS records in seconds if not specified
+	kCloudflarePropertiesProxied = "proxied"
+)
 
 type cf struct {
 	integration string
@@ -97,20 +99,26 @@ func (c *cf) Create(ctx context.Context, record *phonebook.DNSRecord) error {
 		return fmt.Errorf("PB-CF-#0005: Failed to create DNS record -- %w", err)
 	}
 
-	record.Status.RemoteID = new(string)
-	*record.Status.RemoteID = response.ID
+	if record.Status.RemoteInfo == nil {
+		record.Status.RemoteInfo = map[string]phonebook.IntegrationInfo{}
+	}
+
+	record.Status.RemoteInfo[c.integration] = phonebook.IntegrationInfo{
+		"recordID": response.ID,
+	}
+
 	return nil
 }
 
 func (c *cf) Delete(ctx context.Context, record *phonebook.DNSRecord) error {
-	if record.Status.RemoteID == nil {
+	if record.Status.RemoteInfo[c.integration] == nil {
 		// Nothing to delete if the RemoteID was never added to this resource. It could
 		// cause an orphan record in Cloudflare, but it might be the better option as the system would
 		// never be able to recover from a lack of remoteID.
 		return nil
 	}
 
-	err := c.DeleteDNSRecord(ctx, client.ZoneIdentifier(c.zoneID), *record.Status.RemoteID)
+	err := c.DeleteDNSRecord(ctx, client.ZoneIdentifier(c.zoneID), record.Status.RemoteInfo[c.integration]["recordID"])
 	if err != nil {
 		return fmt.Errorf("PB-CF-#0006: Failed to delete DNS record -- %w", err)
 	}

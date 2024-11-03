@@ -14,181 +14,313 @@ spec:
     singular: dnsintegration
   scope: Cluster
   versions:
-  - name: v1alpha1
-    schema:
-      openAPIV3Schema:
-        description: DNSProvider is the Schema for the dnsproviders API
-        properties:
-          apiVersion:
-            description: |-
-              APIVersion defines the versioned schema of this representation of an object.
-              Servers should convert recognized schemas to the latest internal value, and
-              may reject unrecognized values.
-              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
-            type: string
-          kind:
-            description: |-
-              Kind is a string value representing the REST resource this object represents.
-              Servers may infer this from the endpoint the client submits requests to.
-              Cannot be updated.
-              In CamelCase.
-              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
-            type: string
-          metadata:
-            type: object
-          spec:
-            description: |-
-              A DNSIntegrationSpec represents the bridge between Phonebook's DNSRecord
-              and the cloud provider's client that will be in charge of those Records.
-              A DNSIntegration should be viewed as a superset of a Kubernetes Deployment.
-            properties:
-              provider:
-                description: |-
-                  Provider that backs this DNSIntegration, ie. cloudflare, aws, azure, etc.
-                  This field is used to figure out what Client to initialize and configure.
-                properties:
-                  args:
-                    items:
-                      type: string
-                    type: array
-                  cmd:
-                    items:
-                      type: string
-                    type: array
-                  image:
-                    description: |-
-                      Image name if you want to use a different image name than the default one used
-                      by Phonebook. If this value isn't set, Phonebook will generate an image name
-                      based off the Provider's name and Phonebook's default repository.
-                      It will also always use the `latest` tag
-                    type: string
-                  name:
-                    description: Name of the provider as specified in the documentation,
-                      ie. cloudflare, aws, azure, etc.
-                    type: string
-                required:
-                - name
-                type: object
-              secretRef:
-                description: |-
-                  A reference to a Kubernetes Secret that will be passed to the Provider
-                  Phonebook needs to be able to read the Secrets as it will gather the secrets
-                  and then pass it to the Provider through the Configure() interface method.
-                properties:
-                  keys:
-                    items:
-                      properties:
-                        key:
-                          type: string
-                        name:
-                          type: string
-                      required:
-                      - key
-                      - name
-                      type: object
-                    type: array
-                  name:
-                    type: string
-                required:
-                - keys
-                - name
-                type: object
-              settings:
-                additionalProperties:
-                  type: string
-                description: |-
-                  Settings that will be passed over to the Provider. This can
-                  be useful for configurations that aren't secrets.
-                type: object
-              zones:
-                description: |-
-                  Zones for which this integration has authority over. However, it doesn't mean
-                  that this provider has exclusivity over the zones. One example would be for
-                  Split-Horizon DNS (1) where the same Zone can be managed by different providers.
-
-                  A Provider can own multiple zones. When a DNSRecord is created, it will look for
-                  a provider if the optional value is set. After, it will look at the DNSRecord's zone
-                  and attempt to match it against one of the zone listed here. If there's a match,
-                  the record will be processed by the Provider.
-
-                  1. https://en.wikipedia.org/wiki/Split-horizon_DNS
-                items:
-                  type: string
-                type: array
-            required:
-            - provider
-            - zones
-            type: object
-          status:
-            description: DNSProviderStatus defines the observed state of DNSProvider
-            properties:
-              conditions:
-                description: |-
-                  Set of conditions that the DNSRecord will go through during its
-                  lifecycle.
-                items:
+    - name: v1alpha1
+      schema:
+        openAPIV3Schema:
+          description: DNSProvider is the Schema for the dnsproviders API
+          properties:
+            apiVersion:
+              description: |-
+                APIVersion defines the versioned schema of this representation of an object.
+                Servers should convert recognized schemas to the latest internal value, and
+                may reject unrecognized values.
+                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+              type: string
+            kind:
+              description: |-
+                Kind is a string value representing the REST resource this object represents.
+                Servers may infer this from the endpoint the client submits requests to.
+                Cannot be updated.
+                In CamelCase.
+                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+              type: string
+            metadata:
+              type: object
+            spec:
+              description: |-
+                A DNSIntegrationSpec represents the bridge between Phonebook's DNSRecord
+                and the cloud provider's client that will be in charge of those Records.
+                When a DNSIntegration is created, it will create a new deployment using a
+                Provider's image. The Deployment will then be in charge of any DNSRecord that
+                matches its Provider and Zone, as specified in the DNSRecord.
+              properties:
+                env:
                   description: |-
-                    Condition is an individual condition that makes the Conditions type. Each of those conditions are created
-                    to isolate some behavior the user wants control over.
+                    Env are passed directly to the Provider as Environment Variables for the deployment. This can
+                    be useful for configurations. It uses native env structure as defined in K8s' docs(1).
+
+                    It can be useful to source environment variables from config or to set them directly too.
+                    If you want to source environment variable from secrets, you may use `secretRef` instead as
+                    it is simpler to use, but that's up to you.
+
+                    1. https://kubernetes.io/docs/tasks/inject-data-application/define-environment-variable-container/
+                  items:
+                    description:
+                      EnvVar represents an environment variable present in
+                      a Container.
+                    properties:
+                      name:
+                        description: Name of the environment variable. Must be a C_IDENTIFIER.
+                        type: string
+                      value:
+                        description: |-
+                          Variable references $(VAR_NAME) are expanded
+                          using the previously defined environment variables in the container and
+                          any service environment variables. If a variable cannot be resolved,
+                          the reference in the input string will be unchanged. Double $$ are reduced
+                          to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e.
+                          "$$(VAR_NAME)" will produce the string literal "$(VAR_NAME)".
+                          Escaped references will never be expanded, regardless of whether the variable
+                          exists or not.
+                          Defaults to "".
+                        type: string
+                      valueFrom:
+                        description:
+                          Source for the environment variable's value. Cannot
+                          be used if value is not empty.
+                        properties:
+                          configMapKeyRef:
+                            description: Selects a key of a ConfigMap.
+                            properties:
+                              key:
+                                description: The key to select.
+                                type: string
+                              name:
+                                default: ""
+                                description: |-
+                                  Name of the referent.
+                                  This field is effectively required, but due to backwards compatibility is
+                                  allowed to be empty. Instances of this type with an empty value here are
+                                  almost certainly wrong.
+                                  More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                type: string
+                              optional:
+                                description:
+                                  Specify whether the ConfigMap or its key
+                                  must be defined
+                                type: boolean
+                            required:
+                              - key
+                            type: object
+                            x-kubernetes-map-type: atomic
+                          fieldRef:
+                            description: |-
+                              Selects a field of the pod: supports metadata.name, metadata.namespace, `metadata.labels['<KEY>']`, `metadata.annotations['<KEY>']`,
+                              spec.nodeName, spec.serviceAccountName, status.hostIP, status.podIP, status.podIPs.
+                            properties:
+                              apiVersion:
+                                description:
+                                  Version of the schema the FieldPath is
+                                  written in terms of, defaults to "v1".
+                                type: string
+                              fieldPath:
+                                description:
+                                  Path of the field to select in the specified
+                                  API version.
+                                type: string
+                            required:
+                              - fieldPath
+                            type: object
+                            x-kubernetes-map-type: atomic
+                          resourceFieldRef:
+                            description: |-
+                              Selects a resource of the container: only resources limits and requests
+                              (limits.cpu, limits.memory, limits.ephemeral-storage, requests.cpu, requests.memory and requests.ephemeral-storage) are currently supported.
+                            properties:
+                              containerName:
+                                description:
+                                  "Container name: required for volumes,
+                                  optional for env vars"
+                                type: string
+                              divisor:
+                                anyOf:
+                                  - type: integer
+                                  - type: string
+                                description:
+                                  Specifies the output format of the exposed
+                                  resources, defaults to "1"
+                                pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                x-kubernetes-int-or-string: true
+                              resource:
+                                description: "Required: resource to select"
+                                type: string
+                            required:
+                              - resource
+                            type: object
+                            x-kubernetes-map-type: atomic
+                          secretKeyRef:
+                            description: Selects a key of a secret in the pod's namespace
+                            properties:
+                              key:
+                                description:
+                                  The key of the secret to select from.  Must
+                                  be a valid secret key.
+                                type: string
+                              name:
+                                default: ""
+                                description: |-
+                                  Name of the referent.
+                                  This field is effectively required, but due to backwards compatibility is
+                                  allowed to be empty. Instances of this type with an empty value here are
+                                  almost certainly wrong.
+                                  More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                type: string
+                              optional:
+                                description:
+                                  Specify whether the Secret or its key must
+                                  be defined
+                                type: boolean
+                            required:
+                              - key
+                            type: object
+                            x-kubernetes-map-type: atomic
+                        type: object
+                    required:
+                      - name
+                    type: object
+                  type: array
+                provider:
+                  description: |-
+                    Provider that backs this DNSIntegration, ie. cloudflare, aws, azure, etc.
+                    This field is used to figure out what Client to initialize and configure.
                   properties:
-                    lastTransitionTime:
+                    args:
+                      items:
+                        type: string
+                      type: array
+                    cmd:
+                      description: Command can be spceifici
+                      items:
+                        type: string
+                      type: array
+                    image:
                       description: |-
-                        LastTransitionTime is the last time the condition transitioned from one status to another. This value is set automatically by
-                        the Conditions' method and as such, don't need to be set by the user.
-                      format: date-time
+                        Image name if you want to use a different image name than the default one used
+                        by Phonebook. If this value isn't set, Phonebook will generate an image name
+                        based off the Provider's name and Phonebook's default repository.
+                        It will also always use the `latest` tag
                       type: string
-                    reason:
+                    name:
                       description: |-
-                        Reason represents the details about the transition and its current state.
-                        For instance, it can hold the description of an error.Error() if the status is set to
-                        ConditionError. This field is optional and should be used to give additionnal context.
-                        Since this value can be overriden by future changes to the status of the condition,
-                        users might want to also record the Reason through Kubernete's EventRecorder.
-                      maxLength: 1024
-                      minLength: 1
-                      type: string
-                    status:
-                      description: |-
-                        Current status of the condition. This field should mutate over the lifetime of the condition. By default, it starts as
-                        ConditionInitialized and it's up to the user to modify the status to reflect where the condition is, relative to its lifetime.
-                      maxLength: 128
-                      type: string
-                    type:
-                      description: |-
-                        The type of the condition you want to have control over. The type is a user-defined value that extends the ConditionType. The type
-                        serves as a way to identify the condition and it can be fetched from the Conditions type by using any of the finder methods.
-                      maxLength: 316
-                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                        Name of the provider as specified in the documentation, ie. cloudflare, aws, azure, etc.
+                        The name has to be a direct match
                       type: string
                   required:
-                  - lastTransitionTime
-                  - status
-                  - type
+                    - name
                   type: object
-                type: array
-              deployment:
-                description: |-
-                  Reference to the deployment that was created for this
-                  Integration.
-                properties:
-                  name:
-                    description: |-
-                      `name` is the name of the resourec.
-                      Required
-                    type: string
-                  namespace:
-                    description: |-
-                      `namespace` is the namespace of the resource.
-                      Required
-                    type: string
-                required:
-                - name
-                - namespace
-                type: object
-            type: object
-        type: object
-    served: true
-    storage: true
-    subresources:
-      status: {}
+                secretRef:
+                  description: |-
+                    A reference to a Kubernetes Secret that will be passed to the Provider. Each keys
+                    defined will be exported as an environment variable to the provider's deployment.
+                    The SecretRef has precedence over the `Env` field so any keys specified here will override
+                    values that would otherwise be defined in the `Env` field.
+                  properties:
+                    keys:
+                      items:
+                        properties:
+                          key:
+                            type: string
+                          name:
+                            type: string
+                        required:
+                          - key
+                          - name
+                        type: object
+                      type: array
+                    name:
+                      type: string
+                  required:
+                    - keys
+                    - name
+                  type: object
+                zones:
+                  description: |-
+                    Zones for which this integration has authority over. However, it doesn't mean
+                    that this provider has exclusivity over the zones. One example would be for
+                    Split-Horizon DNS (1) where the same Zone can be managed by different providers.
 
+                    A Provider can own multiple zones. When a DNSRecord is created, it will look for
+                    a provider if the optional value is set. After, it will look at the DNSRecord's zone
+                    and attempt to match it against one of the zone listed here. If there's a match,
+                    the record will be processed by the Provider.
+
+                    1. https://en.wikipedia.org/wiki/Split-horizon_DNS
+                  items:
+                    type: string
+                  type: array
+              required:
+                - provider
+                - zones
+              type: object
+            status:
+              description: DNSProviderStatus defines the observed state of DNSProvider
+              properties:
+                conditions:
+                  description: |-
+                    Set of conditions that the DNSRecord will go through during its
+                    lifecycle.
+                  items:
+                    description: |-
+                      Condition is an individual condition that makes the Conditions type. Each of those conditions are created
+                      to isolate some behavior the user wants control over.
+                    properties:
+                      lastTransitionTime:
+                        description: |-
+                          LastTransitionTime is the last time the condition transitioned from one status to another. This value is set automatically by
+                          the Conditions' method and as such, don't need to be set by the user.
+                        format: date-time
+                        type: string
+                      reason:
+                        description: |-
+                          Reason represents the details about the transition and its current state.
+                          For instance, it can hold the description of an error.Error() if the status is set to
+                          ConditionError. This field is optional and should be used to give additionnal context.
+                          Since this value can be overriden by future changes to the status of the condition,
+                          users might want to also record the Reason through Kubernete's EventRecorder.
+                        maxLength: 1024
+                        minLength: 1
+                        type: string
+                      status:
+                        description: |-
+                          Current status of the condition. This field should mutate over the lifetime of the condition. By default, it starts as
+                          ConditionInitialized and it's up to the user to modify the status to reflect where the condition is, relative to its lifetime.
+                        maxLength: 128
+                        type: string
+                      type:
+                        description: |-
+                          The type of the condition you want to have control over. The type is a user-defined value that extends the ConditionType. The type
+                          serves as a way to identify the condition and it can be fetched from the Conditions type by using any of the finder methods.
+                        maxLength: 316
+                        pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                        type: string
+                    required:
+                      - lastTransitionTime
+                      - status
+                      - type
+                    type: object
+                  type: array
+                deployment:
+                  description: |-
+                    Reference to the deployment that was created for this
+                    Integration.
+                  properties:
+                    name:
+                      description: |-
+                        `name` is the name of the resourec.
+                        Required
+                      type: string
+                    namespace:
+                      description: |-
+                        `namespace` is the namespace of the resource.
+                        Required
+                      type: string
+                  required:
+                    - name
+                    - namespace
+                  type: object
+              type: object
+          type: object
+      served: true
+      storage: true
+      subresources:
+        status: {}

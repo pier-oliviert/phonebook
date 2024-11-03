@@ -9,7 +9,10 @@ import (
 	phonebook "github.com/pier-oliviert/phonebook/api/v1alpha1"
 )
 
-const kDesecToken = "DESEC_TOKEN"
+const (
+	kDesecToken           = "DESEC_TOKEN"
+	kDesecMetaRecordIDKey = "desec.io/record_id"
+)
 
 type DesecAPI interface {
 	CreateDNSRecord(ctx context.Context, domain, name, recordType, content string, ttl int) error
@@ -22,7 +25,8 @@ type mockAPI struct {
 }
 
 type desecClient struct {
-	API DesecAPI
+	integration string
+	API         DesecAPI
 }
 
 func (m *mockAPI) CreateDNSRecord(ctx context.Context, domain, name, recordType, content string, ttl int) error {
@@ -44,7 +48,7 @@ func (c *desecClient) CreateDNSRecord(ctx context.Context, record *phonebook.DNS
 	name := record.Spec.Name
 	recordType := record.Spec.RecordType
 	content := record.Spec.Targets[0] // Assuming the first target is the content
-	ttl := 3600                      // You might want to make this configurable
+	ttl := 3600                       // You might want to make this configurable
 
 	err := c.API.CreateDNSRecord(ctx, domain, name, recordType, content, ttl)
 	if err != nil {
@@ -54,13 +58,17 @@ func (c *desecClient) CreateDNSRecord(ctx context.Context, record *phonebook.DNS
 	// Set the RemoteID in the record's status
 	// For deSEC, we don't have a specific ID, so we'll use a combination of name and type
 	remoteID := fmt.Sprintf("%s-%s", name, recordType)
-	record.Status.RemoteID = &remoteID
+	record.Status.RemoteInfo = map[string]phonebook.IntegrationInfo{
+		c.integration: {
+			"recordID": remoteID,
+		},
+	}
 
 	return nil
 }
 
 func (c *desecClient) Delete(ctx context.Context, record *phonebook.DNSRecord) error {
-	if record.Status.RemoteID == nil {
+	if record.Status.RemoteInfo[c.integration] == nil {
 		return nil // Nothing to delete if RemoteID is not set
 	}
 
@@ -138,7 +146,8 @@ func TestDNSCreation(t *testing.T) {
 
 	// Create desecClient with mock API
 	c := desecClient{
-		API: mockAPI,
+		integration: "mytest",
+		API:         mockAPI,
 	}
 
 	// Test DNS record creation
@@ -149,8 +158,8 @@ func TestDNSCreation(t *testing.T) {
 
 	// Check if RemoteID was set correctly
 	expectedRemoteID := "subdomain-A"
-	if record.Status.RemoteID == nil || *record.Status.RemoteID != expectedRemoteID {
-		t.Errorf("Expected RemoteID to be '%s', but got: %v", expectedRemoteID, record.Status.RemoteID)
+	if record.Status.RemoteInfo[c.integration]["recordID"] == "" || record.Status.RemoteInfo[c.integration]["recordID"] != expectedRemoteID {
+		t.Errorf("Expected RemoteID to be '%s', but got: %v", expectedRemoteID, record.Status.RemoteInfo[c.integration]["recordID"])
 	}
 }
 
@@ -158,20 +167,6 @@ func TestDNSDeletion(t *testing.T) {
 	// Set API token environment variable
 	os.Setenv(kDesecToken, "SomeValue")
 	defer os.Unsetenv(kDesecToken)
-
-	// Prepare test DNS record
-	remoteID := "subdomain-A"
-	record := phonebook.DNSRecord{
-		Spec: phonebook.DNSRecordSpec{
-			Zone:       "mydomain.com",
-			Name:       "subdomain",
-			RecordType: "A",
-			Targets:    []string{"127.0.0.1"},
-		},
-		Status: phonebook.DNSRecordStatus{
-			RemoteID: &remoteID,
-		},
-	}
 
 	// Mock the DeleteDNSRecord function
 	mockAPI := &mockAPI{
@@ -186,7 +181,26 @@ func TestDNSDeletion(t *testing.T) {
 
 	// Create desecClient with mock API
 	c := desecClient{
-		API: mockAPI,
+		integration: "Another-test",
+		API:         mockAPI,
+	}
+	//
+	// Prepare test DNS record
+	remoteID := "subdomain-A"
+	record := phonebook.DNSRecord{
+		Spec: phonebook.DNSRecordSpec{
+			Zone:       "mydomain.com",
+			Name:       "subdomain",
+			RecordType: "A",
+			Targets:    []string{"127.0.0.1"},
+		},
+		Status: phonebook.DNSRecordStatus{
+			RemoteInfo: map[string]phonebook.IntegrationInfo{
+				c.integration: {
+					"recordID": remoteID,
+				},
+			},
+		},
 	}
 
 	// Test DNS record deletion

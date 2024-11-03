@@ -188,6 +188,7 @@ func TestCreateDNSRecordWithTTL(t *testing.T) {
 
 	// Create the azureDNS client with the mock
 	c := &azureDNS{
+		integration:      "azure-test",
 		zoneName:         "example.com",
 		resourceGroup:    "SomeResourceGroup",
 		recordSetsClient: mockClient,
@@ -198,8 +199,7 @@ func TestCreateDNSRecordWithTTL(t *testing.T) {
 
 	// Assert
 	assert.NoError(t, err)
-	assert.Equal(t, "Azure", record.Status.Provider)
-	assert.Equal(t, to.Ptr("fake-id"), record.Status.RemoteID)
+	assert.Equal(t, "fake-id", record.Status.RemoteInfo[c.integration]["recordID"])
 
 	// Verify that our expectations were met
 	mockClient.AssertExpectations(t)
@@ -250,8 +250,7 @@ func TestCreateDNSRecordWithDefaultTTL(t *testing.T) {
 
 	// Assert
 	assert.NoError(t, err)
-	assert.Equal(t, "Azure", record.Status.Provider)
-	assert.Equal(t, to.Ptr("fake-id"), record.Status.RemoteID)
+	assert.Equal(t, "fake-id", record.Status.RemoteInfo[c.integration]["recordID"])
 
 	// Verify that our expectations were met
 	mockClient.AssertExpectations(t)
@@ -292,8 +291,6 @@ func TestDeleteDNSRecord(t *testing.T) {
 
 	// Assert
 	assert.NoError(t, err)
-	assert.Equal(t, "Azure", record.Status.Provider)
-	assert.Nil(t, record.Status.RemoteID)
 
 	// Verify that our expectations were met
 	mockClient.AssertExpectations(t)

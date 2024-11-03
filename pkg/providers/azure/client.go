@@ -111,8 +111,12 @@ func (c *azureDNS) Create(ctx context.Context, record *phonebook.DNSRecord) erro
 		return fmt.Errorf("PB-AZ-#0010: Failed to create Azure DNS record: %w", err)
 	}
 
-	record.Status.Provider = "Azure"
-	record.Status.RemoteID = response.ID
+	if record.Status.RemoteInfo == nil {
+		record.Status.RemoteInfo = map[string]phonebook.IntegrationInfo{}
+	}
+	record.Status.RemoteInfo[c.integration] = phonebook.IntegrationInfo{
+		"recordID": *response.ID,
+	}
 
 	// Log the record creation to the console
 	log.FromContext(ctx).Info("[Provider] Azure DNS Record Created", "Name", record.Spec.Name, "Type", record.Spec.RecordType, "Targets", record.Spec.Targets, "TTL", *params.Properties.TTL)
@@ -125,9 +129,6 @@ func (c *azureDNS) Delete(ctx context.Context, record *phonebook.DNSRecord) erro
 	if err != nil {
 		return fmt.Errorf("PB-AZ-#0011: failed to delete Azure DNS record: %w", err)
 	}
-
-	record.Status.Provider = "Azure"
-	record.Status.RemoteID = nil
 
 	// Log the record deletion to the console
 	log.FromContext(ctx).Info("[Provider] Azure DNS Record Deleted", "Name", record.Spec.Name, "Type", record.Spec.RecordType, "Targets", record.Spec.Targets)

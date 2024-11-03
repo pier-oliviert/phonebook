@@ -14,136 +14,170 @@ spec:
     singular: dnsrecord
   scope: Namespaced
   versions:
-  - name: v1alpha1
-    schema:
-      openAPIV3Schema:
-        description: DNSRecord is the Schema for the dnsrecords API
-        properties:
-          apiVersion:
-            description: |-
-              APIVersion defines the versioned schema of this representation of an object.
-              Servers should convert recognized schemas to the latest internal value, and
-              may reject unrecognized values.
-              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
-            type: string
-          kind:
-            description: |-
-              Kind is a string value representing the REST resource this object represents.
-              Servers may infer this from the endpoint the client submits requests to.
-              Cannot be updated.
-              In CamelCase.
-              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
-            type: string
-          metadata:
-            type: object
-          spec:
-            description: |-
-              DNSRecordSpec defines the desired state of DNSRecord and represents
-              a single DNS Record. It is expected that each DNS Record won't conflict with each other
-              and it's the user's job to make sure that each record have a unique spec.
-            properties:
-              name:
-                description: |-
-                  Name of the record represents the subdomain in the CNAME example used for zone.
-                  In that example, the `Name` would be `foo`
-                type: string
+    - name: v1alpha1
+      schema:
+        openAPIV3Schema:
+          description: DNSRecord is the Schema for the dnsrecords API
+          properties:
+            apiVersion:
+              description: |-
+                APIVersion defines the versioned schema of this representation of an object.
+                Servers should convert recognized schemas to the latest internal value, and
+                may reject unrecognized values.
+                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+              type: string
+            kind:
+              description: |-
+                Kind is a string value representing the REST resource this object represents.
+                Servers may infer this from the endpoint the client submits requests to.
+                Cannot be updated.
+                In CamelCase.
+                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+              type: string
+            metadata:
+              type: object
+            spec:
+              description: |-
+                DNSRecordSpec defines the desired state of DNSRecord and represents
+                a single DNS Record. It is expected that each DNS Record won't conflict with each other
+                and it's the user's job to make sure that each record have a unique spec.
               properties:
-                additionalProperties:
-                  type: string
-                description: |-
-                  Provider specific configuration settings that can be used
-                  to configure a DNS Record in accordance to the provider used.
-                  Each provider provides its own set of custom fields.
-                type: object
-              recordType:
-                description: |-
-                  RecordType represent the type for the Record you want to create.
-                  Can be A, AAAA, CNAME, TXT, etc.
-                type: string
-              targets:
-                description: |-
-                  Targets represents where the record should point to. Depending on the record type,
-                  it can be an IP address or some text value.
-                  The reason why targets is plural is because some provider support multiple values for
-                  a given record types. For most cases, it's expected to only have 1 value.
-                items:
-                  type: string
-                type: array
-              ttl:
-                description: |-
-                  TTL is the Time To Live for the record. It represents the time
-                  in seconds that the record is cached by resolvers.
-                  If not set, the provider will use its default value (60 seconds).
-                type: integer
-              zone:
-                description: |-
-                  Zone is the the DNS Zone that you want to create a record for.
-                  If you want to create a CNAME called foo.mydomain.com,
-                  "mydomain.com" would be your zone.
-                type: string
-            required:
-            - name
-            - recordType
-            - targets
-            - zone
-            type: object
-          status:
-            description: DNSRecordStatus defines the observed state of DNSRecord
-            properties:
-              conditions:
-                description: |-
-                  Set of conditions that the DNSRecord will go through during its
-                  lifecycle.
-                items:
+                integration:
                   description: |-
-                    Condition is an individual condition that makes the Conditions type. Each of those conditions are created
-                    to isolate some behavior the user wants control over.
-                  properties:
-                    lastTransitionTime:
-                      description: |-
-                        LastTransitionTime is the last time the condition transitioned from one status to another. This value is set automatically by
-                        the Conditions' method and as such, don't need to be set by the user.
-                      format: date-time
-                      type: string
-                    reason:
-                      description: |-
-                        Reason represents the details about the transition and its current state.
-                        For instance, it can hold the description of an error.Error() if the status is set to
-                        ConditionError. This field is optional and should be used to give additionnal context.
-                        Since this value can be overriden by future changes to the status of the condition,
-                        users might want to also record the Reason through Kubernete's EventRecorder.
-                      maxLength: 1024
-                      minLength: 1
-                      type: string
-                    status:
-                      description: |-
-                        Current status of the condition. This field should mutate over the lifetime of the condition. By default, it starts as
-                        ConditionInitialized and it's up to the user to modify the status to reflect where the condition is, relative to its lifetime.
-                      maxLength: 128
-                      type: string
-                    type:
-                      description: |-
-                        The type of the condition you want to have control over. The type is a user-defined value that extends the ConditionType. The type
-                        serves as a way to identify the condition and it can be fetched from the Conditions type by using any of the finder methods.
-                      maxLength: 316
-                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
-                      type: string
-                  required:
-                  - lastTransitionTime
-                  - status
-                  - type
+                    Optional field to be more specific about which Provider you want to use for
+                    this record. This field is useful if you have more than one Provider serving
+                    the same Zone (ie. Split-Horizon DNS).
+
+                    In most cases, this field isn't necessary as the Zone field should be enough
+                    to let Phonebook find the proper Provider. This field only gives a hint to Phonebook
+                    and the Zones has to match as well.
+                  type: string
+                name:
+                  description: |-
+                    Name of the record represents the subdomain in the CNAME example used for zone.
+                    In that example, the `Name` would be `foo`
+                  type: string
+                properties:
+                  additionalProperties:
+                    type: string
+                  description: |-
+                    Provider specific configuration settings that can be used
+                    to configure a DNS Record in accordance to the provider used.
+                    Each provider provides its own set of custom fields.
                   type: object
-                type: array
-              provider:
-                description: Name of the provider that was used to create this record.
-                type: string
-              remoteID:
-                description: RemoteID is the ID, if available for the record that
-                  was created
-                type: string
-            type: object
-        type: object
-    served: true
-    storage: true
-    subresources:
-      status: {}
+                recordType:
+                  description: |-
+                    RecordType represent the type for the Record you want to create.
+                    Can be A, AAAA, CNAME, TXT, etc.
+                  type: string
+                targets:
+                  description: |-
+                    Targets represents where the record should point to. Depending on the record type,
+                    it can be an IP address or some text value.
+                    The reason why targets is plural is because some provider support multiple values for
+                    a given record types. For most cases, it's expected to only have 1 value.
+                  items:
+                    type: string
+                  type: array
+                ttl:
+                  description: |-
+                    TTL is the Time To Live for the record. It represents the time
+                    in seconds that the record is cached by resolvers.
+                    If not set, the provider will use its default value (60 seconds).
+                  format: int64
+                  type: integer
+                zone:
+                  description: |-
+                    Zone is the the DNS Zone that you want to create a record for.
+                    If you want to create a CNAME called foo.mydomain.com,
+                    "mydomain.com" would be your zone.
+
+                    The Zone needs to find a match in one of the DNSProvider configured in your
+                    cluster. Unless the optional `Provider` field is set, Phonebook will look
+                    at all the providers configured to try to find a match for the zone.
+
+                    If no provider matches the zone, the record won't be created.
+                  type: string
+              required:
+                - name
+                - recordType
+                - targets
+                - zone
+              type: object
+            status:
+              description: DNSRecordStatus defines the observed state of DNSRecord
+              properties:
+                conditions:
+                  description: |-
+                    Set of conditions that the DNSRecord will go through during its
+                    lifecycle.
+                  items:
+                    description: |-
+                      Condition is an individual condition that makes the Conditions type. Each of those conditions are created
+                      to isolate some behavior the user wants control over.
+                    properties:
+                      lastTransitionTime:
+                        description: |-
+                          LastTransitionTime is the last time the condition transitioned from one status to another. This value is set automatically by
+                          the Conditions' method and as such, don't need to be set by the user.
+                        format: date-time
+                        type: string
+                      reason:
+                        description: |-
+                          Reason represents the details about the transition and its current state.
+                          For instance, it can hold the description of an error.Error() if the status is set to
+                          ConditionError. This field is optional and should be used to give additionnal context.
+                          Since this value can be overriden by future changes to the status of the condition,
+                          users might want to also record the Reason through Kubernete's EventRecorder.
+                        maxLength: 1024
+                        minLength: 1
+                        type: string
+                      status:
+                        description: |-
+                          Current status of the condition. This field should mutate over the lifetime of the condition. By default, it starts as
+                          ConditionInitialized and it's up to the user to modify the status to reflect where the condition is, relative to its lifetime.
+                        maxLength: 128
+                        type: string
+                      type:
+                        description: |-
+                          The type of the condition you want to have control over. The type is a user-defined value that extends the ConditionType. The type
+                          serves as a way to identify the condition and it can be fetched from the Conditions type by using any of the finder methods.
+                        maxLength: 316
+                        pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                        type: string
+                    required:
+                      - lastTransitionTime
+                      - status
+                      - type
+                    type: object
+                  type: array
+                remoteInfo:
+                  additionalProperties:
+                    additionalProperties:
+                      type: string
+                    type: object
+                  description: |-
+                    RemoteInfo is a field that can be used by DNSIntegration's provider to
+                    store information as the Record is created. Each integration has its own map it can
+                    populate with arbitrary data. Each entries in the root RemoteInfo refers to the name of
+                    the integration that stored the intormation. For instance, if you have a DNSRecord that
+                    is shared between 2 integrations named `cloudflare-dev` and `aws-prod`, RemoteInfo would
+                    look like this:
+                       map[string]map[string]string{
+                         "cloudflare-dev": map[string]string{
+                           // cloudflare related information about the record
+                         },
+                         "aws-prod": map[string]string{
+                           // aws related information about the record
+                         }
+                       }
+
+                    A DNSIntegration can have multiple entries stored in this field and it's up the integration
+                    to make sure those fields are not stale.
+                  type: object
+              type: object
+          type: object
+      served: true
+      storage: true
+      subresources:
+        status: {}
