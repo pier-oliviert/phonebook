@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"slices"
 
+	core "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
@@ -75,6 +76,14 @@ func (r *ProviderReconciler) Reconcile(ctx context.Context, req ctrl.Request) (r
 			c.Reason = "DNS Record Created"
 			return c, nil
 		})
+	}
+
+	if err != nil {
+		r.EventRecorder.Event(
+			record,
+			core.EventTypeWarning,
+			string(lock.Condition().Status),
+			err.Error())
 	}
 
 	return result, err
