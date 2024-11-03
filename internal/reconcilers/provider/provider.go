@@ -11,6 +11,7 @@ import (
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/pier-oliviert/konditionner/pkg/konditions"
 	phonebook "github.com/pier-oliviert/phonebook/api/v1alpha1"
@@ -76,6 +77,12 @@ func (r *ProviderReconciler) Reconcile(ctx context.Context, req ctrl.Request) (r
 			c.Reason = "DNS Record Created"
 			return c, nil
 		})
+	}
+
+	if k8sErrors.IsConflict(err) {
+		log.FromContext(ctx).Info("Conflict error while updating the DNSRecord, retrying.", "Error", err)
+		result.Requeue = true
+		return result, nil
 	}
 
 	if err != nil {
