@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"strings"
 
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -60,13 +61,11 @@ func (r *DNSRecordReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 	log.FromContext(ctx).Info("Reconciling", "Record", record)
 	if !record.DeletionTimestamp.IsZero() {
-		condition := record.Status.Conditions.FindType(phonebook.ProviderCondition)
-		if condition == nil || (condition.Status == konditions.ConditionError || condition.Status == konditions.ConditionTerminated) {
+		if r.AllProvidersMatchesOneOf(*record.Conditions(), konditions.ConditionError, konditions.ConditionTerminated) {
 			if controllerutil.RemoveFinalizer(record, kDNSRecordFinalizer) {
 				return ctrl.Result{Requeue: true}, r.Update(ctx, record)
 			}
 		}
-
 		return ctrl.Result{}, err
 	}
 
@@ -81,43 +80,63 @@ func (r *DNSRecordReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 
 	if lock.Condition().Status == konditions.ConditionInitialized {
-
 		lock.Execute(ctx, func(c konditions.Condition) (konditions.Condition, error) {
+			found := 0
 			var integrations phonebook.DNSIntegrationList
-			var integration *phonebook.DNSIntegration
 
 			if err := r.List(ctx, &integrations); err != nil {
 				return c, err
 			}
 
-			for _, i := range integrations.Items {
+			for _, integration := range integrations.Items {
 				if record.Spec.Integration != nil {
-					if *record.Spec.Integration != i.Name {
+					if *record.Spec.Integration != integration.Name {
 						continue
 					}
 				}
 
-				if slices.Contains(i.Spec.Zones, record.Spec.Zone) {
-					integration = &i
-					goto FOUND_INTEGRATION
+				if slices.Contains(integration.Spec.Zones, record.Spec.Zone) {
+					found += 1
+					record.Status.Conditions.SetCondition(konditions.Condition{
+						Type:   konditions.ConditionType(fmt.Sprintf("provider://%s", integration.Name)),
+						Status: konditions.ConditionCompleted,
+						Reason: fmt.Sprintf("Integration has authority over %s", record.Spec.Zone),
+					})
 				}
 			}
 
-			goto NO_INTEGRATION
+			if found == 0 {
+				c.Status = konditions.ConditionError
+				c.Reason = fmt.Sprintf("No Integration matches the zone for this record: %s", record.Spec.Zone)
+				return c, nil
+			}
 
-		FOUND_INTEGRATION:
 			c.Status = konditions.ConditionCompleted
-			c.Reason = fmt.Sprintf("Integration found: %s", integration.Name)
-			return c, nil
-
-		NO_INTEGRATION:
-			c.Status = konditions.ConditionError
-			c.Reason = fmt.Sprintf("No Integration matches the zone for this record: %s", record.Spec.Zone)
+			c.Reason = fmt.Sprintf("Found %d integration that has authority over %s", found, record.Spec.Zone)
 			return c, nil
 		})
 	}
 
 	return ctrl.Result{}, nil
+}
+
+func (r *DNSRecordReconciler) AllProvidersMatchesOneOf(conditions konditions.Conditions, statuses ...konditions.ConditionStatus) bool {
+	for _, c := range conditions {
+		if strings.HasPrefix(string(c.Type), "provider://") {
+			match := false
+			for _, s := range statuses {
+				if c.Status == s {
+					match = true
+				}
+			}
+
+			if !match {
+				return false
+			}
+		}
+	}
+
+	return true
 }
 
 func (r *DNSRecordReconciler) GetRecord(ctx context.Context, req ctrl.Request) (*phonebook.DNSRecord, error) {

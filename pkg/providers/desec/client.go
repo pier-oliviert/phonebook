@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/nrdcg/desec"
+	"github.com/pier-oliviert/konditionner/pkg/konditions"
 	phonebook "github.com/pier-oliviert/phonebook/api/v1alpha1"
 	utils "github.com/pier-oliviert/phonebook/pkg/utils"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -56,7 +57,7 @@ func (d *deSEC) Zones() []string {
 }
 
 // Create DNS record in deSEC
-func (d *deSEC) Create(ctx context.Context, record *phonebook.DNSRecord) error {
+func (d *deSEC) Create(ctx context.Context, record phonebook.DNSRecord, su phonebook.StagingUpdater) error {
 	logger := log.FromContext(ctx)
 
 	ttl := defaultTTL
@@ -81,12 +82,13 @@ func (d *deSEC) Create(ctx context.Context, record *phonebook.DNSRecord) error {
 	}
 
 	logger.Info("[Provider] deSEC Record Created")
+	su.StageCondition(konditions.ConditionCreated, "deSEC record created")
 
 	return nil
 }
 
 // Delete DNS record in deSEC
-func (d *deSEC) Delete(ctx context.Context, record *phonebook.DNSRecord) error {
+func (d *deSEC) Delete(ctx context.Context, record phonebook.DNSRecord, su phonebook.StagingUpdater) error {
 	logger := log.FromContext(ctx)
 
 	// Delete the RRSet
@@ -96,6 +98,8 @@ func (d *deSEC) Delete(ctx context.Context, record *phonebook.DNSRecord) error {
 	}
 
 	logger.Info("[Provider] deSEC Record Deleted")
+
+	su.StageCondition(konditions.ConditionTerminated, "deSEC record deleted")
 
 	return nil
 }

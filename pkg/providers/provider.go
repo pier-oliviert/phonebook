@@ -29,10 +29,10 @@ type Provider interface {
 	Configure(ctx context.Context, integration string, zones []string) error
 
 	// Create a DNS Record
-	Create(context.Context, *phonebook.DNSRecord) error
+	Create(context.Context, phonebook.DNSRecord, phonebook.StagingUpdater) error
 
 	// Delete a DNS Record
-	Delete(context.Context, *phonebook.DNSRecord) error
+	Delete(context.Context, phonebook.DNSRecord, phonebook.StagingUpdater) error
 
 	// Zones the Provider has authority over
 	Zones() []string

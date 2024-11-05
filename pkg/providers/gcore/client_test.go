@@ -8,6 +8,7 @@ import (
 
 	gdns "github.com/G-Core/gcore-dns-sdk-go"
 	phonebook "github.com/pier-oliviert/phonebook/api/v1alpha1"
+	"github.com/pier-oliviert/phonebook/pkg/mocks"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -80,7 +81,7 @@ func TestCreation(t *testing.T) {
 		Status: phonebook.DNSRecordStatus{},
 	}
 
-	err = client.Create(context.Background(), &record)
+	err = client.Create(context.Background(), record, &mocks.Updater{})
 	if err != nil {
 		t.Error(err)
 	}
@@ -125,7 +126,7 @@ func TestCreationTTLSet(t *testing.T) {
 	}
 	*record.Spec.TTL = 900
 
-	err = client.Create(context.Background(), &record)
+	err = client.Create(context.Background(), record, &mocks.Updater{})
 	if err != nil {
 		t.Error(err)
 	}

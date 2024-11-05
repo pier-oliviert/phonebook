@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/route53"
 	"github.com/aws/aws-sdk-go-v2/service/route53/types"
+	"github.com/pier-oliviert/konditionner/pkg/konditions"
 	phonebook "github.com/pier-oliviert/phonebook/api/v1alpha1"
 	utils "github.com/pier-oliviert/phonebook/pkg/utils"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -66,13 +67,13 @@ func (c *r53) Zones() []string {
 	return c.zones
 }
 
-func (c *r53) Create(ctx context.Context, record *phonebook.DNSRecord) error {
+func (c *r53) Create(ctx context.Context, record phonebook.DNSRecord, updater phonebook.StagingUpdater) error {
 	inputs := route53.ChangeResourceRecordSetsInput{
 		HostedZoneId: &c.zoneID,
 		ChangeBatch: &types.ChangeBatch{
 			Changes: []types.Change{{
 				Action:            types.ChangeActionCreate,
-				ResourceRecordSet: c.resourceRecordSet(ctx, record),
+				ResourceRecordSet: c.resourceRecordSet(ctx, &record),
 			}},
 		},
 	}
@@ -81,16 +82,18 @@ func (c *r53) Create(ctx context.Context, record *phonebook.DNSRecord) error {
 	if err != nil {
 		return fmt.Errorf("PB-AWS-#0003: Failed to create DNS record -- %w", err)
 	}
+
+	updater.StageCondition(konditions.ConditionCreated, "Route53 created the record")
 	return nil
 }
 
-func (c *r53) Delete(ctx context.Context, record *phonebook.DNSRecord) error {
+func (c *r53) Delete(ctx context.Context, record phonebook.DNSRecord, updater phonebook.StagingUpdater) error {
 	inputs := route53.ChangeResourceRecordSetsInput{
 		HostedZoneId: &c.zoneID,
 		ChangeBatch: &types.ChangeBatch{
 			Changes: []types.Change{{
 				Action:            types.ChangeActionDelete,
-				ResourceRecordSet: c.resourceRecordSet(ctx, record),
+				ResourceRecordSet: c.resourceRecordSet(ctx, &record),
 			}},
 		},
 	}
@@ -99,6 +102,9 @@ func (c *r53) Delete(ctx context.Context, record *phonebook.DNSRecord) error {
 	if err != nil {
 		return fmt.Errorf("PB-AWS-#0004: Failed to delete DNS record -- %w", err)
 	}
+
+	updater.StageCondition(konditions.ConditionTerminated, "Route53 record deleted")
+
 	return nil
 }
 

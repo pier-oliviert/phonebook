@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	phonebook "github.com/pier-oliviert/phonebook/api/v1alpha1"
+	"github.com/pier-oliviert/phonebook/pkg/mocks"
 )
 
 // MockRecordSetsClient is a mock for the Azure RecordSetsClient
@@ -195,11 +196,12 @@ func TestCreateDNSRecordWithTTL(t *testing.T) {
 	}
 
 	// Perform the Create operation
-	err := c.Create(context.TODO(), record)
+	updater := &mocks.Updater{}
+	err := c.Create(context.TODO(), *record, updater)
 
 	// Assert
 	assert.NoError(t, err)
-	assert.Equal(t, "fake-id", record.Status.RemoteInfo[c.integration]["recordID"])
+	assert.Equal(t, "fake-id", updater.Info["recordID"])
 
 	// Verify that our expectations were met
 	mockClient.AssertExpectations(t)
@@ -246,11 +248,12 @@ func TestCreateDNSRecordWithDefaultTTL(t *testing.T) {
 	}
 
 	// Perform the Create operation
-	err := c.Create(context.TODO(), record)
+	updater := &mocks.Updater{}
+	err := c.Create(context.TODO(), *record, updater)
 
 	// Assert
 	assert.NoError(t, err)
-	assert.Equal(t, "fake-id", record.Status.RemoteInfo[c.integration]["recordID"])
+	assert.Equal(t, "fake-id", updater.Info["recordID"])
 
 	// Verify that our expectations were met
 	mockClient.AssertExpectations(t)
@@ -287,7 +290,7 @@ func TestDeleteDNSRecord(t *testing.T) {
 	}
 
 	// Perform the Delete operation
-	err := c.Delete(context.TODO(), record)
+	err := c.Delete(context.TODO(), *record, &mocks.Updater{})
 
 	// Assert
 	assert.NoError(t, err)

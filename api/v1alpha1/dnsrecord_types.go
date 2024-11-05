@@ -78,7 +78,43 @@ type DNSRecordSpec struct {
 	Integration *string `json:"integration,omitempty"`
 }
 
+// Optional field that a provider can use to keep track of remote data it might need in the future, eg. Remote ID for deleting the
+// record. Values can only be string.
 type IntegrationInfo map[string]string
+
+// StagingUpdater is an interface used by providers to safely update DNSRecord's status. Since
+// DNSRecord can interact with multiple DNSIntegrations, the DNSRecord's status needs to be scoped for
+// each DNSIntegration so they can all keep the DNSRecord status updated without conflicting with each other.
+//
+// StagingUpdater is a proxy that will scope all changes to the specific condition/IntegrationInfo. It's rather simple,
+// each DNSIntegration that has authority over the zone will have its own Condition in the DSNRecord's Conditions as well
+// its own entry in the IntegrationInfo map. Both of those will have the name of the DNSIntegration as the unique key,
+// which means that even if there's more than one integration for a given provider (aws, cloudflare, etc.), the uniqueness
+// of the key is still valid.
+//
+// As the name of the methods and interface suggest, these operations are only staging. As a result, they aren't persisted
+// when those method returns. In fact, multiple calls overwrite the previously set values during the **same reconciliation loop**.
+//
+// When Create/Destroy returns, the server's reconciliation loop will update the Condition and the IntegrationInfo.
+//
+// It is important to note that in case of an error returning from Create/Destroy, the error will take precedence over
+// the staged condition. The Status will be set to Error and the reason will be set to the error message.
+// +kubebuilder:object:generate=false
+type StagingUpdater interface {
+	// StageCondition lets an integration update the condition that is attached to the
+	// DNSIntegration.
+	// For instance, if the DNSIntegration was created with the name `my-test-123` and the provider
+	// is AWS, calling
+	//   StageCondition(konditions.ConditionCreated, "Resource created")
+	//
+	// would mean that the condition with the condition type `my-test-123` will
+	// have the status and reason set at the end of the reconciliation loop.
+	StageCondition(status konditions.ConditionStatus, reason string)
+
+	// StagingRemoteInfo lets the provider store provider-related information in
+	// the DNSRecord's RemoteInfo field. This is an optional field.
+	StageRemoteInfo(IntegrationInfo)
+}
 
 // DNSRecordStatus defines the observed state of DNSRecord
 type DNSRecordStatus struct {

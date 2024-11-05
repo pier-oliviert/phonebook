@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 
@@ -18,18 +19,22 @@ import (
 	"github.com/pier-oliviert/phonebook/pkg/providers"
 )
 
+var ErrProviderDidNotSetCondition = errors.New("PB-#0100: Provider didn't set a condition status upon returning from function")
+
 // ProviderReconciler handles all incoming reconciliation requests
 // for DNSRecord that matches the Integration as defined. It ignores
 // any DNSRecord that doesn't fit the requirement set for the
 // Provider (ie. zone defined)
 type ProviderReconciler struct {
-	Store *providers.ProviderStore
+	Store       *providers.ProviderStore
+	Integration string
 
 	client.Client
 	Scheme *runtime.Scheme
 	record.EventRecorder
 }
 
+// Reconciliation runs for the Provider.
 func (r *ProviderReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result ctrl.Result, err error) {
 	record, err := r.GetRecord(ctx, req)
 	if k8sErrors.IsNotFound(err) {
@@ -40,8 +45,13 @@ func (r *ProviderReconciler) Reconcile(ctx context.Context, req ctrl.Request) (r
 		return result, err
 	}
 
-	condition := record.Status.Conditions.FindType(phonebook.IntegrationCondition)
-	if condition == nil || condition.Status != konditions.ConditionCompleted {
+	su := &stageUpdater{
+		record: record,
+	}
+
+	conditionType := konditions.ConditionType(r.Integration)
+	condition := record.Status.Conditions.FindType(conditionType)
+	if condition == nil || condition.Status == konditions.ConditionError || condition.Status == konditions.ConditionCompleted {
 		return result, nil
 	}
 
@@ -51,30 +61,60 @@ func (r *ProviderReconciler) Reconcile(ctx context.Context, req ctrl.Request) (r
 		return result, nil
 	}
 
-	lock := konditions.NewLock(record, r.Client, phonebook.ProviderCondition)
+	lock := konditions.NewLock(record, r.Client, conditionType)
 	if lock.Condition().Status == konditions.ConditionError {
 		return result, nil
 	}
 
-	if !record.DeletionTimestamp.IsZero() {
+	switch {
+	case !record.DeletionTimestamp.IsZero():
 		err = lock.Execute(ctx, func(c konditions.Condition) (konditions.Condition, error) {
-			if err = r.Store.Provider().Delete(ctx, record); err != nil {
+			if err = r.Store.Provider().Delete(ctx, *record.DeepCopy(), su); err != nil {
 				return c, err
 			}
 
-			c.Status = konditions.ConditionTerminated
-			c.Reason = "DNS Record Deleted"
+			if su.status == nil {
+				return c, ErrProviderDidNotSetCondition
+			}
+
+			c.Status = *su.status
+
+			if su.reason != nil {
+				c.Reason = *su.reason
+			}
+
+			if su.info != nil {
+				record.Status.RemoteInfo[r.Integration] = su.info
+			}
+
 			return c, nil
 		})
-	}
 
-	if lock.Condition().Status == konditions.ConditionInitialized {
+	case lock.Condition().Status == konditions.ConditionInitialized:
+		// Execute will update the DNSRecord's Status subresource before
+		// it returns. Unless there is an error while updating, any field set on the status
+		// will be persisted by the end of this method.
 		err = lock.Execute(ctx, func(c konditions.Condition) (konditions.Condition, error) {
-			if err = r.Store.Provider().Create(ctx, record); err != nil {
+			if err = r.Store.Provider().Create(ctx, *record.DeepCopy(), su); err != nil {
 				return c, err
 			}
-			c.Status = konditions.ConditionCreated
-			c.Reason = "DNS Record Created"
+			if su.status == nil {
+				return c, ErrProviderDidNotSetCondition
+			}
+			c.Status = *su.status
+
+			if su.reason != nil {
+				c.Reason = *su.reason
+			}
+
+			if su.info != nil {
+				if record.Status.RemoteInfo == nil {
+					record.Status.RemoteInfo = make(map[string]phonebook.IntegrationInfo)
+				}
+
+				record.Status.RemoteInfo[r.Integration] = su.info
+			}
+
 			return c, nil
 		})
 	}
@@ -86,7 +126,7 @@ func (r *ProviderReconciler) Reconcile(ctx context.Context, req ctrl.Request) (r
 	}
 
 	if err != nil {
-		r.EventRecorder.Event(
+		r.Event(
 			record,
 			core.EventTypeWarning,
 			string(lock.Condition().Status),
@@ -109,4 +149,20 @@ func (r *ProviderReconciler) GetRecord(ctx context.Context, req ctrl.Request) (*
 	}
 
 	return &record, nil
+}
+
+type stageUpdater struct {
+	record *phonebook.DNSRecord
+	status *konditions.ConditionStatus
+	reason *string
+	info   phonebook.IntegrationInfo
+}
+
+func (su *stageUpdater) StageCondition(status konditions.ConditionStatus, reason string) {
+	su.status = &status
+	su.reason = &reason
+}
+
+func (su *stageUpdater) StageRemoteInfo(info phonebook.IntegrationInfo) {
+	su.info = info
 }

@@ -26,9 +26,7 @@ import (
 	"github.com/pier-oliviert/phonebook/pkg/providers"
 )
 
-var (
-	scheme = runtime.NewScheme()
-)
+var scheme = runtime.NewScheme()
 
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
@@ -87,6 +85,7 @@ func (s *server) Run() error {
 	}
 
 	if err = (&reconcilers.ProviderReconciler{
+		Integration:   integration,
 		Store:         &s.ProviderStore,
 		Client:        mgr.GetClient(),
 		Scheme:        mgr.GetScheme(),

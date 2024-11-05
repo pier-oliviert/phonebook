@@ -9,6 +9,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/dns/armdns"
+	"github.com/pier-oliviert/konditionner/pkg/konditions"
 	phonebook "github.com/pier-oliviert/phonebook/api/v1alpha1"
 	utils "github.com/pier-oliviert/phonebook/pkg/utils"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -101,8 +102,8 @@ func (c *azureDNS) Zones() []string {
 }
 
 // Create DNS record in Azure
-func (c *azureDNS) Create(ctx context.Context, record *phonebook.DNSRecord) error {
-	params, err := c.resourceRecordSet(ctx, record)
+func (c *azureDNS) Create(ctx context.Context, record phonebook.DNSRecord, su phonebook.StagingUpdater) error {
+	params, err := c.resourceRecordSet(ctx, &record)
 	if err != nil {
 		return fmt.Errorf("PB-AZ-#0009: Failed to create resource record set: %w", err)
 	}
@@ -111,20 +112,20 @@ func (c *azureDNS) Create(ctx context.Context, record *phonebook.DNSRecord) erro
 		return fmt.Errorf("PB-AZ-#0010: Failed to create Azure DNS record: %w", err)
 	}
 
-	if record.Status.RemoteInfo == nil {
-		record.Status.RemoteInfo = map[string]phonebook.IntegrationInfo{}
-	}
-	record.Status.RemoteInfo[c.integration] = phonebook.IntegrationInfo{
-		"recordID": *response.ID,
-	}
-
 	// Log the record creation to the console
 	log.FromContext(ctx).Info("[Provider] Azure DNS Record Created", "Name", record.Spec.Name, "Type", record.Spec.RecordType, "Targets", record.Spec.Targets, "TTL", *params.Properties.TTL)
+
+	su.StageRemoteInfo(phonebook.IntegrationInfo{
+		"recordID": *response.ID,
+	})
+
+	su.StageCondition(konditions.ConditionCreated, "Azure DNS record created")
+
 	return nil
 }
 
 // Delete DNS record from Azure
-func (c *azureDNS) Delete(ctx context.Context, record *phonebook.DNSRecord) error {
+func (c *azureDNS) Delete(ctx context.Context, record phonebook.DNSRecord, su phonebook.StagingUpdater) error {
 	_, err := c.recordSetsClient.Delete(ctx, c.resourceGroup, c.zoneName, record.Spec.Name, armdns.RecordType(record.Spec.RecordType), nil)
 	if err != nil {
 		return fmt.Errorf("PB-AZ-#0011: failed to delete Azure DNS record: %w", err)
@@ -132,6 +133,7 @@ func (c *azureDNS) Delete(ctx context.Context, record *phonebook.DNSRecord) erro
 
 	// Log the record deletion to the console
 	log.FromContext(ctx).Info("[Provider] Azure DNS Record Deleted", "Name", record.Spec.Name, "Type", record.Spec.RecordType, "Targets", record.Spec.Targets)
+	su.StageCondition(konditions.ConditionTerminated, "Azure DNS record deleted")
 
 	return nil
 }

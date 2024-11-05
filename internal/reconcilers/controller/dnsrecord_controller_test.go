@@ -27,6 +27,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/pier-oliviert/konditionner/pkg/konditions"
 	phonebook "github.com/pier-oliviert/phonebook/api/v1alpha1"
 )
 
@@ -94,6 +95,90 @@ var _ = Describe("DNSRecord Controller", func() {
 			Expect(err).NotTo(HaveOccurred())
 			// TODO(user): Add more specific assertions depending on your controller's reconciliation logic.
 			// Example: If you expect a certain status condition after reconciliation, verify it here.
+		})
+	})
+
+	Context("AllProvidersMatchesOneOf", func() {
+		It("returns false if no conditions are present", func() {
+			r := &DNSRecordReconciler{}
+			Expect(r.AllProvidersMatchesOneOf(konditions.Conditions{})).To(Equal(true))
+		})
+
+		It("returns false if no condition status present", func() {
+			r := &DNSRecordReconciler{}
+			conditions := konditions.Conditions{{
+				Type:   konditions.ConditionType("provider://test"),
+				Status: konditions.ConditionError,
+			}}
+
+			Expect(r.AllProvidersMatchesOneOf(conditions)).To(Equal(false))
+		})
+
+		It("returns true if no condition for providers present", func() {
+			r := &DNSRecordReconciler{}
+
+			conditions := konditions.Conditions{{
+				Type:   konditions.ConditionType("test"),
+				Status: konditions.ConditionError,
+			}}
+
+			Expect(r.AllProvidersMatchesOneOf(conditions)).To(Equal(true))
+		})
+
+		It("returns true if all condition for providers matches one of the condition status", func() {
+			r := &DNSRecordReconciler{}
+
+			conditions := konditions.Conditions{
+				{
+					Type:   konditions.ConditionType("not-a-provider"),
+					Status: konditions.ConditionCreated,
+				},
+				{
+					Type:   konditions.ConditionType("provider://test"),
+					Status: konditions.ConditionError,
+				},
+				{
+					Type:   konditions.ConditionType("provider://test-1"),
+					Status: konditions.ConditionTerminated,
+				},
+				{
+					Type:   konditions.ConditionType("provider://test-2"),
+					Status: konditions.ConditionTerminated,
+				},
+			}
+
+			Expect(r.AllProvidersMatchesOneOf(
+				conditions,
+				konditions.ConditionTerminated,
+				konditions.ConditionError,
+				konditions.ConditionCompleted),
+			).To(Equal(true))
+		})
+
+		It("returns false if one condition for providers matches one of the condition status", func() {
+			r := &DNSRecordReconciler{}
+
+			conditions := konditions.Conditions{
+				{
+					Type:   konditions.ConditionType("provider://test"),
+					Status: konditions.ConditionLocked,
+				},
+				{
+					Type:   konditions.ConditionType("provider://test-1"),
+					Status: konditions.ConditionTerminated,
+				},
+				{
+					Type:   konditions.ConditionType("provider://test-2"),
+					Status: konditions.ConditionTerminated,
+				},
+			}
+
+			Expect(r.AllProvidersMatchesOneOf(
+				conditions,
+				konditions.ConditionTerminated,
+				konditions.ConditionError,
+				konditions.ConditionCompleted),
+			).To(Equal(false))
 		})
 	})
 })

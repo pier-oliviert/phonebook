@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	client "github.com/cloudflare/cloudflare-go"
+	"github.com/pier-oliviert/konditionner/pkg/konditions"
 	phonebook "github.com/pier-oliviert/phonebook/api/v1alpha1"
 	"github.com/pier-oliviert/phonebook/pkg/utils"
 )
@@ -66,7 +67,7 @@ func (c *cf) Zones() []string {
 	return c.zones
 }
 
-func (c *cf) Create(ctx context.Context, record *phonebook.DNSRecord) error {
+func (c *cf) Create(ctx context.Context, record phonebook.DNSRecord, su phonebook.StagingUpdater) error {
 	dnsParams := client.CreateDNSRecordParams{
 		Type:    record.Spec.RecordType,
 		Name:    record.Spec.Name,
@@ -99,18 +100,15 @@ func (c *cf) Create(ctx context.Context, record *phonebook.DNSRecord) error {
 		return fmt.Errorf("PB-CF-#0005: Failed to create DNS record -- %w", err)
 	}
 
-	if record.Status.RemoteInfo == nil {
-		record.Status.RemoteInfo = map[string]phonebook.IntegrationInfo{}
-	}
-
-	record.Status.RemoteInfo[c.integration] = phonebook.IntegrationInfo{
+	su.StageRemoteInfo(phonebook.IntegrationInfo{
 		"recordID": response.ID,
-	}
+	})
+	su.StageCondition(konditions.ConditionCreated, "Cloudflare record created")
 
 	return nil
 }
 
-func (c *cf) Delete(ctx context.Context, record *phonebook.DNSRecord) error {
+func (c *cf) Delete(ctx context.Context, record phonebook.DNSRecord, su phonebook.StagingUpdater) error {
 	if record.Status.RemoteInfo[c.integration] == nil {
 		// Nothing to delete if the RemoteID was never added to this resource. It could
 		// cause an orphan record in Cloudflare, but it might be the better option as the system would
@@ -122,5 +120,8 @@ func (c *cf) Delete(ctx context.Context, record *phonebook.DNSRecord) error {
 	if err != nil {
 		return fmt.Errorf("PB-CF-#0006: Failed to delete DNS record -- %w", err)
 	}
+
+	su.StageCondition(konditions.ConditionTerminated, "Cloudflare record deleted")
+
 	return nil
 }
