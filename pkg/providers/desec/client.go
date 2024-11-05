@@ -12,7 +12,7 @@ import (
 
 const (
 	kDesecToken = "DESEC_TOKEN"
-	defaultTTL  = int64(60) // Default TTL for DNS records in seconds if not specified
+	defaultTTL  = int64(3600) // Default TTL for DNS records in seconds if not specified
 )
 
 type deSEC struct {
@@ -66,7 +66,9 @@ func (d *deSEC) Create(ctx context.Context, record *phonebook.DNSRecord) error {
 
 	// Create a new RRSet
 	rrset := desec.RRSet{
+		Domain:  record.Spec.Zone,
 		Name:    record.Spec.Name,
+		SubName: record.Spec.Name,
 		Type:    record.Spec.RecordType,
 		TTL:     int(ttl),
 		Records: record.Spec.Targets,
@@ -87,15 +89,8 @@ func (d *deSEC) Create(ctx context.Context, record *phonebook.DNSRecord) error {
 func (d *deSEC) Delete(ctx context.Context, record *phonebook.DNSRecord) error {
 	logger := log.FromContext(ctx)
 
-	// Create a new RRSet
-	rrset := desec.RRSet{
-		Name:    record.Spec.Name,
-		Type:    record.Spec.RecordType,
-		Records: record.Spec.Targets,
-	}
-
 	// Delete the RRSet
-	err := d.client.Records.Delete(ctx, rrset.Name, rrset.Type, rrset.Records[0])
+	err := d.client.Records.Delete(ctx, record.Spec.Zone, record.Spec.Name, record.Spec.RecordType)
 	if err != nil {
 		return fmt.Errorf("PB-DESEC-#0003: Unable to delete record -- %w", err)
 	}
