@@ -23,6 +23,7 @@ This is a list of all errors that are coded (PB#_NUM_: ...) in Phonebook. The li
 |PB-SLV-#0003|**Could not parse the label selector**|This is an internal error, if it happens to you, please file an [issue](https://github.com/pier-oliviert/phonebook/issues/new).|
 
 # Provider Specific Error Codes
+|PB-#0100|Provider did not set a condition|Phonebook requires a provider to update the condition's status when the provider create/delete a record.|
 
 ## Azure
 |Number|Title|Description|
