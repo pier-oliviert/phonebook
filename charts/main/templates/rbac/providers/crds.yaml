@@ -1,0 +1,22 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: phonebook:providers
+  labels: {{- include "operator.labels" . | nindent 4 }}
+rules:
+  - apiGroups:
+      - se.quencer.io
+    resources:
+      - dnsrecords
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - se.quencer.io
+    resources:
+      - dnsrecords/status
+    verbs:
+      - get
+      - patch
+      - update

@@ -1,0 +1,14 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: phonebook
+  name: phonebook:providers-events
+rules:
+  - apiGroups:
+      - core
+    resources:
+      - events
+    verbs:
+      - create
+      - patch

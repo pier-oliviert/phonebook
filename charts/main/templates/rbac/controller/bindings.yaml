@@ -1,71 +1,49 @@
 apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  labels:
-    app.kubernetes.io/name: phonebook
-    {{- include "operator.labels" . | nindent 4 }}
-
-  name: phonebook:controller
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: phonebook:controller
-subjects:
-- kind: ServiceAccount
-  name: phonebook-controller
-  namespace: {{ .Release.Namespace }}
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  labels:
-    app.kubernetes.io/name: phonebook
-    {{- include "operator.labels" . | nindent 4 }}
-
-  name: phonebook:providers
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: phonebook:providers
-subjects:
-- kind: ServiceAccount
-  name: phonebook-providers
-  namespace: {{ .Release.Namespace }}
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  labels:
-    app.kubernetes.io/name: phonebook
-    {{- include "operator.labels" . | nindent 4 }}
-
-  name: phonebook:metrics
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: phonebook:metrics
-subjects:
-- kind: ServiceAccount
-  name: phonebook-controller
-  namespace: {{ .Release.Namespace }}
----
-{{- if .Values.solver.enabled }}
-apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   labels:
     app.kubernetes.io/name: phonebook
     {{- include "operator.labels" . | nindent 4 }}
-
-  name: phonebook:solver
-  namespace: kube-system
-
+  name: phonebook:leader-election
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: extension-apiserver-authentication-reader
+  name: phonebook:leader-election
 subjects:
 - kind: ServiceAccount
   name: phonebook-controller
   namespace: {{ .Release.Namespace }}
-{{- end }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/name: phonebook
+    {{- include "operator.labels" . | nindent 4 }}
+
+  name: phonebook:controller
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: phonebook:controller
+subjects:
+- kind: ServiceAccount
+  name: phonebook-controller
+  namespace: {{ .Release.Namespace }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/name: phonebook
+    {{- include "operator.labels" . | nindent 4 }}
+
+  name: phonebook:metrics
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: phonebook:metrics
+subjects:
+- kind: ServiceAccount
+  name: phonebook-controller
+  namespace: {{ .Release.Namespace }}

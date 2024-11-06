@@ -1,0 +1,21 @@
+{{- if .Values.solver.enabled }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/name: phonebook
+    {{- include "operator.labels" . | nindent 4 }}
+
+  name: phonebook:solver
+  namespace: kube-system
+
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: extension-apiserver-authentication-reader
+subjects:
+- kind: ServiceAccount
+  name: phonebook-controller
+  namespace: {{ .Release.Namespace }}
+{{- end }}
+
