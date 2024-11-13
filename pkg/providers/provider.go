@@ -2,10 +2,14 @@ package providers
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	phonebook "github.com/pier-oliviert/phonebook/api/v1alpha1"
 )
+
+// This constant needs to be configured through a build flag when Phonebook is released
+var ProviderVersion = "0.0.0"
 
 type ProviderStore struct {
 	mu       sync.Mutex
@@ -39,9 +43,9 @@ type Provider interface {
 }
 
 var ProviderImages = map[string]string{
-	"aws":        "ghcr.io/pier-oliviert/providers-aws:v0.3.7",
-	"azure":      "ghcr.io/pier-oliviert/providers-azure:v0.3.7",
-	"cloudflare": "ghcr.io/pier-oliviert/providers-cloudflare:v0.3.7",
-	"desec":      "ghcr.io/pier-oliviert/providers-desec:v0.3.7",
-	"gcore":      "ghcr.io/pier-oliviert/providers-gcore:v0.3.7",
+	"aws":        fmt.Sprintf("ghcr.io/pier-oliviert/providers-aws:v%s", ProviderVersion),
+	"azure":      fmt.Sprintf("ghcr.io/pier-oliviert/providers-azure:v%s", ProviderVersion),
+	"cloudflare": fmt.Sprintf("ghcr.io/pier-oliviert/providers-cloudflare:v%s", ProviderVersion),
+	"desec":      fmt.Sprintf("ghcr.io/pier-oliviert/providers-desec:v%s", ProviderVersion),
+	"gcore":      fmt.Sprintf("ghcr.io/pier-oliviert/providers-gcore:v%s", ProviderVersion),
 }
