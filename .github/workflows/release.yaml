@@ -1,0 +1,98 @@
+name: Release new version
+
+on:
+  push:
+    tags:
+      - v[0-9]+.[0-9]+.[0-9]+*
+
+env:
+  GIT_AUTHOR_EMAIL: ${{vars.AUTHOR_EMAIL}}
+  GIT_AUTHOR_NAME: $${{vars.AUTHOR_NAME}}
+  GIT_COMMITTER_EMAIL: ${{vars.AUTHOR_EMAIL}}
+  GIT_COMMITTER_NAME: $${{vars.AUTHOR_NAME}}
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.action.outputs.tag }}
+      version: ${{ steps.action.outputs.version }}
+      version_start_hash: ${{ steps.action.outputs.version_start_hash}}
+      version_end_hash: ${{ steps.action.outputs.version_end_hash}}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Generate new version
+        id: action
+        uses: pier-oliviert/actions@7e90437ea8493b6377020624d8f04b73c2900c9a
+        with:
+          args: /actions/index.ts create version
+          auth_token: ${{ secrets.GH_ACTION_TOKEN }}
+          repo: ${{ github.repository}}
+          variable: "PHONEBOOK_VERSION"
+
+  changelog:
+    permissions:
+      contents: write
+      id-token: write
+    runs-on: ubuntu-latest
+    needs: ["version"]
+    outputs:
+      changelog: ${{steps.action.outputs.changelog}}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Generate Changelog
+        uses: pier-oliviert/actions@7e90437ea8493b6377020624d8f04b73c2900c9a
+        id: action
+        env:
+          GIT_CLIFF__CHANGELOG__HEADER: ""
+          GIT_CLIFF__CHANGELOG__FOOTER: ""
+        with:
+          auth_token: ${{ secrets.GH_ACTION_TOKEN }}
+          args: /actions/index.ts create changelogs
+          version: ${{needs.version.outputs.version}}
+          version_start_hash: ${{needs.version.outputs.version_start_hash}}
+          version_end_hash: ${{needs.version.outputs.version_end_hash}}
+
+  release:
+    runs-on: ubuntu-latest
+    needs: ["version", "changelog"]
+    outputs:
+      upload_url: ${{steps.action.outputs.upload_url}}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Deploy Helm package
+        id: action
+        uses: pier-oliviert/actions@7e90437ea8493b6377020624d8f04b73c2900c9a
+        with:
+          args: /actions/index.ts create release
+          auth_token: ${{ secrets.GH_ACTION_TOKEN }}
+          repo: ${{ github.repository}}
+          version: ${{ needs.version.outputs.version }}
+          tag: ${{ needs.version.outputs.tag }}
+          changelog: ${{ needs.changelog.outputs.changelog }}
+
+  helm:
+    permissions:
+      contents: write
+      id-token: write
+    runs-on: ubuntu-latest
+    needs: ["version", "release"]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Deploy Helm package
+        uses: pier-oliviert/actions@7e90437ea8493b6377020624d8f04b73c2900c9a
+        with:
+          args: /actions/index.ts create helm
+          auth_token: ${{ secrets.GH_ACTION_TOKEN }}
+          repo: ${{ github.repository}}
+          release_upload_url: ${{ needs.release.outputs.upload_url }}
+          version: ${{ needs.version.outputs.version }}

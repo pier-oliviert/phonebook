@@ -1,8 +1,9 @@
 name: Create and publish a Docker image
 
 on:
-  release:
-    types: [published]
+  push:
+    tags:
+      - v[0-9]+.[0-9]+.[0-9]+*
 
 env:
   REGISTRY: ghcr.io
@@ -11,6 +12,7 @@ env:
 jobs:
   build-and-push-image:
     runs-on: ubuntu-latest
+    needs: ["version"]
     permissions:
       contents: write
       packages: write
@@ -31,6 +33,8 @@ jobs:
       - name: Controller
         id: push
         uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
+        env:
+          PROVIDER_VERSION: ${{vars.PHONEBOOK_VERSION}}
         with:
           file: ${{ github.workspace }}/Dockerfile.controller
           context: .
