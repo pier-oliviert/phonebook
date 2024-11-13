@@ -131,7 +131,7 @@ jobs:
           push: true
           tags: |
             ${{ env.REGISTRY }}/${{github.repository}}:latest
-            ${{ env.REGISTRY }}/${{github.repository}}:${{github.event.release.tag_name}}
+            ${{ env.REGISTRY }}/${{github.repository}}:${{vars.PHONEBOOK_VERSION}}
 
       - name: "Providers: AWS"
         id: aws
@@ -143,7 +143,7 @@ jobs:
           push: true
           tags: |
             ${{ env.REGISTRY }}/pier-oliviert/providers-aws:latest
-            ${{ env.REGISTRY }}/pier-oliviert/providers-aws:${{github.event.release.tag_name}}
+            ${{ env.REGISTRY }}/pier-oliviert/providers-aws:${{vars.PHONEBOOK_VERSION}}
 
       - name: "Providers: Azure"
         id: azure
@@ -155,7 +155,7 @@ jobs:
           push: true
           tags: |
             ${{ env.REGISTRY }}/pier-oliviert/providers-azure:latest
-            ${{ env.REGISTRY }}/pier-oliviert/providers-azure:${{github.event.release.tag_name}}
+            ${{ env.REGISTRY }}/pier-oliviert/providers-azure:${{vars.PHONEBOOK_VERSION}}
 
       - name: "Providers: Cloudflare"
         id: cloudflare
@@ -167,7 +167,7 @@ jobs:
           push: true
           tags: |
             ${{ env.REGISTRY }}/pier-oliviert/providers-cloudflare:latest
-            ${{ env.REGISTRY }}/pier-oliviert/providers-cloudflare:${{github.event.release.tag_name}}
+            ${{ env.REGISTRY }}/pier-oliviert/providers-cloudflare:${{vars.PHONEBOOK_VERSION}}
 
       - name: "Providers: deSEC"
         id: desec
@@ -179,7 +179,7 @@ jobs:
           push: true
           tags: |
             ${{ env.REGISTRY }}/pier-oliviert/providers-desec:latest
-            ${{ env.REGISTRY }}/pier-oliviert/providers-desec:${{github.event.release.tag_name}}
+            ${{ env.REGISTRY }}/pier-oliviert/providers-desec:${{vars.PHONEBOOK_VERSION}}
 
       - name: "Providers: Gcore"
         id: gcore
@@ -191,4 +191,4 @@ jobs:
           push: true
           tags: |
             ${{ env.REGISTRY }}/pier-oliviert/providers-gcore:latest
-            ${{ env.REGISTRY }}/pier-oliviert/providers-gcore:${{github.event.release.tag_name}}
+            ${{ env.REGISTRY }}/pier-oliviert/providers-gcore:${{vars.PHONEBOOK_VERSION}}
