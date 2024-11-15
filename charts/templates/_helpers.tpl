@@ -6,6 +6,10 @@
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
+{{- define "operator.defaultImage" -}}
+{{- printf "ghcr.io/pier-oliviert/phonebook:v%s" .Chart.Version }}
+{{- end }}
+
 {{- define "operator.labels" -}}
 helm.sh/chart: {{ include "operator.chart" . }}
 {{- if .Chart.AppVersion }}
@@ -14,3 +18,4 @@ app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 app.kubernetes.io/part-of: {{ include "operator.name" . }}
 {{- end }}
+

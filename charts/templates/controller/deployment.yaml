@@ -48,7 +48,7 @@ spec:
         {{- if .Values.solver.enabled }}
           - --solver
         {{- end }}
-        image: {{ .Values.controller.image }} 
+        image: {{ (.Values.controller).image | default (include "operator.defaultImage" .) | quote }}
         name: controller
         env:
           - name: PB_PROVIDER_SERVICE_ACC
@@ -57,7 +57,7 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: metadata.namespace
-        {{- range .Values.controller.env }}
+        {{- range (.Values.controller).env }}
           - name: {{ .name | quote }}
             value: {{ toYaml .value }}
         {{- end }}
