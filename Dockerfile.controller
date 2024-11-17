@@ -2,6 +2,7 @@
 FROM golang:1.23 AS source
 ARG TARGETOS
 ARG TARGETARCH
+ARG PROVIDER_VERSION
 
 WORKDIR /workspace
 # Copy the Go Modules manifests
@@ -19,7 +20,7 @@ COPY pkg/ pkg/
 COPY internal/ internal/
 COPY cmd/controller/main.go cmd/main.go
 
-RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH} go build -ldflags="-X 'providers.ProviderVersion=${PROVIDER_VERSION}'" -a -o controller cmd/main.go
+RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH} go build -ldflags="-X 'github.com/pier-oliviert/phonebook/pkg/providers.ProviderVersion=${PROVIDER_VERSION}'" -a -o controller cmd/main.go
 
 
 # Use distroless as minimal base image to package the controller binary
