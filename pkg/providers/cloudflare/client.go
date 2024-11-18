@@ -12,10 +12,13 @@ import (
 )
 
 const (
-	kCloudflareAPIKeyName        = "CF_API_TOKEN"
-	kCloudflareZoneID            = "CF_ZONE_ID"
-	defaultTTL                   = int64(60) // Default TTL for DNS records in seconds if not specified
+	kCloudflareAPIKeyName = "CF_API_TOKEN"
+	kCloudflareZoneID     = "CF_ZONE_ID"
+	defaultTTL            = int64(60) // Default TTL for DNS records in seconds if not specified
+
 	kCloudflarePropertiesProxied = "proxied"
+	PropertiesComment            = "comment"
+	PropertiesTags               = "tags"
 )
 
 type cf struct {
@@ -72,6 +75,14 @@ func (c *cf) Create(ctx context.Context, record phonebook.DNSRecord, su phoneboo
 		Type:    record.Spec.RecordType,
 		Name:    record.Spec.Name,
 		Content: record.Spec.Targets[0],
+	}
+
+	if comment, found := record.Spec.Properties[PropertiesComment]; found {
+		dnsParams.Comment = comment
+	}
+
+	if tags, found := record.Spec.Properties[PropertiesTags]; found {
+		dnsParams.Tags = strings.Split(tags, ";")
 	}
 
 	// It doesn't seem the cloudflare api library has a way of supporting multiple targets
