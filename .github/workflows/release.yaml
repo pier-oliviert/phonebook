@@ -45,6 +45,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: Generate Changelog
         uses: pier-oliviert/actions@d8e6c7a28f9f870282524b6e9a52c8e805402a2e
         id: action
