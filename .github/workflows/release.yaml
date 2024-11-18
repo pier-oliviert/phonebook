@@ -124,7 +124,7 @@ jobs:
         id: push
         uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
         env:
-          PROVIDER_VERSION: ${{vars.PHONEBOOK_VERSION}}
+          PROVIDER_VERSION: ${{needs.version.outputs.version}}
         with:
           file: ${{ github.workspace }}/Dockerfile.controller
           context: .
