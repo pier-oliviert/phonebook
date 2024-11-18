@@ -74,6 +74,6 @@ spec:
   properties:
     comment: "A Comment for this record"
     tags: "phonebook;development;user-1"
-
+```
 
 Tags are delimited by the semi-colon character(`;`). You can specify as many as you'd like.
