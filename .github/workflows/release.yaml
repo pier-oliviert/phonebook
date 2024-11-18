@@ -15,23 +15,24 @@ env:
 
 jobs:
   version:
+    permissions:
+      contents: read
+      id-token: write
     runs-on: ubuntu-latest
     outputs:
       tag: ${{ steps.action.outputs.tag }}
       version: ${{ steps.action.outputs.version }}
-      version_start_hash: ${{ steps.action.outputs.version_start_hash}}
-      version_end_hash: ${{ steps.action.outputs.version_end_hash}}
+      commit_start: ${{ steps.action.outputs.commit_start}}
+      commit_end: ${{ steps.action.outputs.commit_end}}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
       - name: Generate new version
         id: action
-        uses: pier-oliviert/actions@e003d23f5b2056d6b3a0c019b4516f668689dd9b
+        uses: pier-oliviert/actions@d8e6c7a28f9f870282524b6e9a52c8e805402a2e
         with:
           args: /actions/index.ts create version
-          auth_token: ${{ secrets.GH_ACTION_TOKEN }}
           repo: ${{ github.repository}}
-          variable: "PHONEBOOK_VERSION"
 
   changelog:
     permissions:
@@ -44,22 +45,22 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
       - name: Generate Changelog
-        uses: pier-oliviert/actions@e003d23f5b2056d6b3a0c019b4516f668689dd9b
+        uses: pier-oliviert/actions@d8e6c7a28f9f870282524b6e9a52c8e805402a2e
         id: action
         env:
           GIT_CLIFF__CHANGELOG__HEADER: ""
           GIT_CLIFF__CHANGELOG__FOOTER: ""
         with:
-          auth_token: ${{ secrets.GH_ACTION_TOKEN }}
           args: /actions/index.ts create changelogs
           version: ${{needs.version.outputs.version}}
-          version_start_hash: ${{needs.version.outputs.version_start_hash}}
-          version_end_hash: ${{needs.version.outputs.version_end_hash}}
+          commit_start: ${{needs.version.outputs.commit_start}}
+          commit_end: ${{needs.version.outputs.commit_end}}
 
   release:
+    permissions:
+      contents: write
+      id-token: write
     runs-on: ubuntu-latest
     needs: ["version", "changelog"]
     outputs:
@@ -69,10 +70,10 @@ jobs:
         uses: actions/checkout@v4
       - name: Deploy Helm package
         id: action
-        uses: pier-oliviert/actions@e003d23f5b2056d6b3a0c019b4516f668689dd9b
+        uses: pier-oliviert/actions@d8e6c7a28f9f870282524b6e9a52c8e805402a2e
         with:
           args: /actions/index.ts create release
-          auth_token: ${{ secrets.GH_ACTION_TOKEN }}
+          auth_token: ${{ secrets.GITHUB_TOKEN }}
           repo: ${{ github.repository}}
           version: ${{ needs.version.outputs.version }}
           tag: ${{ needs.version.outputs.tag }}
@@ -91,12 +92,12 @@ jobs:
           ref: main
           fetch-depth: 0
       - name: Deploy Helm package
-        uses: pier-oliviert/actions@e003d23f5b2056d6b3a0c019b4516f668689dd9b
+        uses: pier-oliviert/actions@d8e6c7a28f9f870282524b6e9a52c8e805402a2e
         with:
           args: /actions/index.ts create helm
-          auth_token: ${{ secrets.GH_ACTION_TOKEN }}
-          repo: ${{ github.repository}}
-          release_upload_url: ${{ needs.release.outputs.upload_url }}
+          auth_token: ${{ secrets.GITHUB_TOKEN }}
+          repo: ${{ github.repository }}
+          upload_url: ${{ needs.release.outputs.upload_url }}
           version: ${{ needs.version.outputs.version }}
 
   build-and-push-image:
@@ -131,7 +132,7 @@ jobs:
           push: true
           tags: |
             ${{ env.REGISTRY }}/${{github.repository}}:latest
-            ${{ env.REGISTRY }}/${{github.repository}}:${{vars.PHONEBOOK_VERSION}}
+            ${{ env.REGISTRY }}/${{github.repository}}:${{needs.version.outputs.tag}}
 
       - name: "Providers: AWS"
         id: aws
@@ -143,7 +144,7 @@ jobs:
           push: true
           tags: |
             ${{ env.REGISTRY }}/pier-oliviert/providers-aws:latest
-            ${{ env.REGISTRY }}/pier-oliviert/providers-aws:${{vars.PHONEBOOK_VERSION}}
+            ${{ env.REGISTRY }}/pier-oliviert/providers-aws:${{needs.version.outputs.tag}}
 
       - name: "Providers: Azure"
         id: azure
@@ -155,7 +156,7 @@ jobs:
           push: true
           tags: |
             ${{ env.REGISTRY }}/pier-oliviert/providers-azure:latest
-            ${{ env.REGISTRY }}/pier-oliviert/providers-azure:${{vars.PHONEBOOK_VERSION}}
+            ${{ env.REGISTRY }}/pier-oliviert/providers-azure:${{needs.version.outputs.tag}}
 
       - name: "Providers: Cloudflare"
         id: cloudflare
@@ -167,7 +168,7 @@ jobs:
           push: true
           tags: |
             ${{ env.REGISTRY }}/pier-oliviert/providers-cloudflare:latest
-            ${{ env.REGISTRY }}/pier-oliviert/providers-cloudflare:${{vars.PHONEBOOK_VERSION}}
+            ${{ env.REGISTRY }}/pier-oliviert/providers-cloudflare:${{needs.version.outputs.tag}}
 
       - name: "Providers: deSEC"
         id: desec
@@ -179,7 +180,7 @@ jobs:
           push: true
           tags: |
             ${{ env.REGISTRY }}/pier-oliviert/providers-desec:latest
-            ${{ env.REGISTRY }}/pier-oliviert/providers-desec:${{vars.PHONEBOOK_VERSION}}
+            ${{ env.REGISTRY }}/pier-oliviert/providers-desec:${{needs.version.outputs.tag}}
 
       - name: "Providers: Gcore"
         id: gcore
@@ -191,4 +192,4 @@ jobs:
           push: true
           tags: |
             ${{ env.REGISTRY }}/pier-oliviert/providers-gcore:latest
-            ${{ env.REGISTRY }}/pier-oliviert/providers-gcore:${{vars.PHONEBOOK_VERSION}}
+            ${{ env.REGISTRY }}/pier-oliviert/providers-gcore:${{needs.version.outputs.tag}}
