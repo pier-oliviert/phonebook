@@ -49,7 +49,7 @@ func (r *ProviderReconciler) Reconcile(ctx context.Context, req ctrl.Request) (r
 		record: record,
 	}
 
-	conditionType := konditions.ConditionType(r.Integration)
+	conditionType := konditions.ConditionType(fmt.Sprintf("provider.%s", r.Integration))
 	condition := record.Status.Conditions.FindType(conditionType)
 	if condition == nil || condition.Status == konditions.ConditionError || condition.Status == konditions.ConditionCompleted {
 		return result, nil

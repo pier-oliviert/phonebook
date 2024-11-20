@@ -80,7 +80,7 @@ func (r *DNSRecordReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 
 	if lock.Condition().Status == konditions.ConditionInitialized {
-		lock.Execute(ctx, func(c konditions.Condition) (konditions.Condition, error) {
+		return ctrl.Result{}, lock.Execute(ctx, func(c konditions.Condition) (konditions.Condition, error) {
 			found := 0
 			var integrations phonebook.DNSIntegrationList
 
@@ -98,8 +98,8 @@ func (r *DNSRecordReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 				if slices.Contains(integration.Spec.Zones, record.Spec.Zone) {
 					found += 1
 					record.Status.Conditions.SetCondition(konditions.Condition{
-						Type:   konditions.ConditionType(fmt.Sprintf("provider://%s", integration.Name)),
-						Status: konditions.ConditionCompleted,
+						Type:   konditions.ConditionType(fmt.Sprintf("provider.%s", integration.Name)),
+						Status: konditions.ConditionInitialized,
 						Reason: fmt.Sprintf("Integration has authority over %s", record.Spec.Zone),
 					})
 				}
