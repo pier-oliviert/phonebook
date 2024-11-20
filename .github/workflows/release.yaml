@@ -34,38 +34,38 @@ jobs:
           args: /actions/index.ts create version
           repo: ${{ github.repository}}
 
-  changelog:
-    permissions:
-      contents: write
-      id-token: write
-    runs-on: ubuntu-latest
-    needs: ["version"]
-    outputs:
-      changelog: ${{steps.action.outputs.changelog}}
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Generate Changelog
-        uses: pier-oliviert/actions@d55875475d4b2f587e4f7755ccdd8b78b5144495
-        id: action
-        env:
-          GIT_CLIFF__CHANGELOG__HEADER: ""
-          GIT_CLIFF__CHANGELOG__FOOTER: ""
-        with:
-          args: /actions/index.ts create changelogs
-          version: ${{needs.version.outputs.version}}
-          commit_start: ${{needs.version.outputs.commit_start}}
-          commit_end: ${{needs.version.outputs.commit_end}}
+  # changelog:
+  #   permissions:
+  #     contents: write
+  #     id-token: write
+  #   runs-on: ubuntu-latest
+  #   needs: ["version"]
+  #   outputs:
+  #     changelog: ${{steps.action.outputs.changelog}}
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
+  #       with:
+  #         fetch-depth: 0
+  #
+  #     - name: Generate Changelog
+  #       uses: pier-oliviert/actions@d55875475d4b2f587e4f7755ccdd8b78b5144495
+  #       id: action
+  #       env:
+  #         GIT_CLIFF__CHANGELOG__HEADER: ""
+  #         GIT_CLIFF__CHANGELOG__FOOTER: ""
+  #       with:
+  #         args: /actions/index.ts create changelogs
+  #         version: ${{needs.version.outputs.version}}
+  #         commit_start: ${{needs.version.outputs.commit_start}}
+  #         commit_end: ${{needs.version.outputs.commit_end}}
 
   release:
     permissions:
       contents: write
       id-token: write
     runs-on: ubuntu-latest
-    needs: ["version", "changelog"]
+    needs: ["version"]
     outputs:
       upload_url: ${{steps.action.outputs.upload_url}}
     steps:
@@ -80,7 +80,7 @@ jobs:
           repo: ${{ github.repository}}
           version: ${{ needs.version.outputs.version }}
           tag: ${{ needs.version.outputs.tag }}
-          changelog: ${{ needs.changelog.outputs.changelog }}
+          # changelog: ${{ needs.changelog.outputs.changelog }}
 
   helm:
     permissions:
