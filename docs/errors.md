@@ -14,8 +14,11 @@ This is a list of all errors that are coded (PB#_NUM_: ...) in Phonebook. The li
 |PB#0002|**DNS Record not found**||
 |PB#0003|**Provider could not delete the DNS record**||
 |PB#0004|Runtime Initialization failure|Phonebook had a failure in its startup sequence. File an [issue](https://github.com/pier-oliviert/phonebook/issues/new).|
+|PB#0005|Deployment is not healthy.|The integration's deployment is not healthy, this can be a temporary issue. Looking at the integration's pod and its log might give you more information.|
+|PB#0006|Could not parse the label selector|This is an internal error, if it happens to you, please file an [issue](https://github.com/pier-oliviert/phonebook/issues/new).|
 
 # DNS-01 Solver Specific Error Codes
+
 |Number|Title|Description|
 |:----|-|-|
 |PB-SLV-#0001|A Challenge DNS Record with type TXT had more than one key associated, this is most likely a bug. File an [issue](https://github.com/pier-oliviert/phonebook/issues/new).|
@@ -23,9 +26,11 @@ This is a list of all errors that are coded (PB#_NUM_: ...) in Phonebook. The li
 |PB-SLV-#0003|**Could not parse the label selector**|This is an internal error, if it happens to you, please file an [issue](https://github.com/pier-oliviert/phonebook/issues/new).|
 
 # Provider Specific Error Codes
+
 |PB-#0100|Provider did not set a condition|Phonebook requires a provider to update the condition's status when the provider create/delete a record.|
 
 ## Azure
+
 |Number|Title|Description|
 |:----|-|-|
 |PB-AZ-#0001|Azure Client ID Not Found|Phonebook failed to find a valid client ID from a secret or env-var for the azure provider|
@@ -45,6 +50,7 @@ This is a list of all errors that are coded (PB#_NUM_: ...) in Phonebook. The li
 |PB-AZ-#0015|Unsupported Record Type|Phonebook encountered an unsupported DNS record type for Azure DNS|
 
 ## AWS
+
 |Number|Title|Description|
 |:----|-|-|
 |PB-AWS-#0001|Failed to Load AWS Configuration|Phonebook failed to load the AWS configuration|
@@ -54,6 +60,7 @@ This is a list of all errors that are coded (PB#_NUM_: ...) in Phonebook. The li
 |PB-AWS-#0005|Unsupported Record Type|Phonebook encountered an unsupported DNS record type for AWS Route 53|
 
 ## Cloudflare
+
 |Number|Title|Description|
 |:----|-|-|
 |PB-CF-#0001|API Key Not Found|Phonebook failed to find a valid Cloudflare API key from a secret or env-var|
@@ -62,6 +69,7 @@ This is a list of all errors that are coded (PB#_NUM_: ...) in Phonebook. The li
 |PB-CF-#0004|Multiple Targets Not Supported|Phonebook attempted to create a DNS record with multiple targets, which is not supported by Cloudflare|
 
 ## deSEC
+
 |Number|Title|Description|
 |:----|-|-|
 |PB-DESEC-#0001|deSEC token not found|Phonebook failed to find a valid deSEC API key from a secret or env-var|
