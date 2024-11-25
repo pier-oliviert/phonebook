@@ -4,7 +4,7 @@ import "github.com/pier-oliviert/konditionner/pkg/konditions"
 
 const (
 	DeploymentCondition konditions.ConditionType = "Deployment"
-	ServiceCondition    konditions.ConditionType = "Service"
+	HealthCondition     konditions.ConditionType = "Health"
 
 	DeploymentFinalizer = "phonebook.se.quencer.io/deployment"
 	DeploymentLabel     = "phonebook.se.quencer.io/deployment"

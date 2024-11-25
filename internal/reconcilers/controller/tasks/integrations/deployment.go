@@ -100,6 +100,7 @@ func (t deployment) deployment() *apps.Deployment {
 	}
 
 	var replicaCount int32 = 1
+	var controller bool = true
 
 	deployment := &apps.Deployment{
 		ObjectMeta: meta.ObjectMeta{
@@ -110,6 +111,7 @@ func (t deployment) deployment() *apps.Deployment {
 				Kind:       t.integration.Kind,
 				Name:       t.integration.Name,
 				UID:        t.integration.UID,
+				Controller: &controller,
 			}},
 			Labels: map[string]string{
 				integrations.DeploymentLabel: t.integration.Name,
